@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Predict — PriceHarvest</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+    <div class="cursor" id="cursor"></div>
+    <div class="cursor-dot" id="cursorDot"></div>
+
+    <div class="loader" id="loader">
+        <div class="loader-inner">
+            <div class="loader-wheat">🌾</div>
+            <div class="loader-bar">
+                <div class="loader-fill" id="loaderFill"></div>
+            </div>
+            <div class="loader-label">Loading PriceHarvest</div>
+        </div>
+    </div>
+
+    <nav id="navbar">
+        <div class="nav-inner">
+            <a class="nav-logo" href="index.html"><span>🌾</span><span>PriceHarvest</span></a>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="index.html#about">About</a></li>
+                <li><a href="index.html#dataset">Dataset</a></li>
+                <li><a href="index.html#eda">EDA</a></li>
+                <li><a href="index.html#insights">EDA Insights</a></li>
+                <li><a href="tableau.html">Tableau</a></li>
+                <li><a href="ml.html">ML Insights</a></li>
+                <li><a href="predict.html">Predict</a></li>
+                <li><a href="mandi.html">Live Mandi</a></li>
+            </ul>
+
+            <div class="lang-switcher" id="langSwitcher">
+                <button class="lang-btn" id="langBtn" aria-label="Change language">
+          <svg class="lang-globe" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
+            <path d="M2 12h20"/>
+          </svg>
+          <span class="lang-current" id="langCurrent">EN</span>
+          <svg class="lang-chevron" width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M4 6l4 4 4-4"/>
+          </svg>
+        </button>
+                <div class="lang-dropdown" id="langDropdown">
+                    <button class="lang-opt active" data-lang="en" data-label="EN">
+            <span class="lang-flag">🇬🇧</span><span class="lang-name">English</span>
+            <svg class="lang-check" width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 8l4 4 6-7"/></svg>
+          </button>
+                    <button class="lang-opt" data-lang="hi" data-label="HI">
+            <span class="lang-flag">🇮🇳</span><span class="lang-name">हिन्दी</span>
+            <svg class="lang-check" width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 8l4 4 6-7"/></svg>
+          </button>
+                    <button class="lang-opt" data-lang="mr" data-label="MR">
+            <span class="lang-flag">🇮🇳</span><span class="lang-name">मराठी</span>
+            <svg class="lang-check" width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 8l4 4 6-7"/></svg>
+          </button>
+                </div>
+            </div>
+
+            <div id="google_translate_element" style="position:absolute;top:-9999px;left:-9999px;opacity:0;pointer-events:none;width:0;height:0;"></div>
+            <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+        </div>
+    </nav>
+
+    <section class="hero page-hero" id="hero">
+        <canvas class="hero-canvas" id="heroCanvas"></canvas>
+        <div class="hero-noise"></div>
+        <div class="hero-content">
+            <div class="hero-badge slide-up" style="--i:0"><span class="badge-dot"></span> Prediction</div>
+            <h1 class="hero-title"><span class="tline slide-up" style="--i:1">Predict the Next <em>30 Days</em></span></h1>
+            <p class="hero-sub slide-up" style="--i:2">Pick a city and a crop to see the expected Modal Price range from the trained ML model.</p>
+        </div>
+    </section>
+
+    <section class="insights" style="padding:80px 0">
+        <div class="container">
+            <div class="sec-tag reveal-fade">Predict</div>
+            <h2 class="sec-title reveal-up">30-Day Price <em>Forecast</em></h2>
+
+            <!-- Theory box – only what you asked to keep -->
+            <div class="ph-chart" style="padding:1.5rem 1.75rem;margin-bottom:2rem;background:#F8FAF9;border:1px solid #E5E7EB;border-radius:12px">
+                <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.35rem;color:#1A4731;margin:0 0 .6rem">How this prediction works</h3>
+                <p style="margin:0 0 .75rem;color:#4B5563;line-height:1.55;font-size:.95rem">
+                    We trained machine-learning models on daily vegetable prices from the government Agmarknet portal. For each city and crop we automatically pick the model that performed best on unseen data, then use it to forecast the next 30 days.
+                </p>
+                <p style="margin:0;color:#4B5563;line-height:1.55;font-size:.95rem">
+                    <strong>Accuracy</strong>: on completely held-out test data the models achieve an average error of <strong>22.4%</strong> (better than a strong baseline of 27%).
+                </p>
+            </div>
+
+            <!-- Controls -->
+            <div class="ph-ctrl">
+                <label>
+          City
+          <select id="phCity">
+            <option>Mumbai</option>
+            <option>Nashik</option>
+            <option>Nagpur</option>
+            <option>Kolhapur</option>
+            <option>Ratnagiri</option>
+          </select>
+        </label>
+                <label>
+          Crop
+          <select id="phCrop">
+            <option>Onion</option>
+            <option>Tomato</option>
+            <option>Potato</option>
+            <option>Spinach</option>
+            <option>Cabbage</option>
+          </select>
+        </label>
+                <label>
+          Action
+          <button class="ph-btn" id="phGo" type="button">Predict next 30 days</button>
+        </label>
+            </div>
+
+            <div id="phOut">
+                <div class="ph-badges" id="phBadges"></div>
+                <div id="phHero"></div>
+                <div class="eda-summary" id="phKpi"></div>
+                <div class="ph-chart" id="phChart"></div>
+                <p class="sec-sub" id="phNote"></p>
+                <div id="phFallback"></div>
+                <div id="phTableWrap"></div>
+            </div>
+
+            <p class="sec-sub" style="margin-top:2rem">
+                Forecasts are data-driven estimates, not guaranteed market prices. Prices are per Quintal (₹/kg = ÷100). The expected range is the model’s prediction ± its typical error for that series, measured on data it never saw during training.
+            </p>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container footer-row">
+            <div class="footer-logo">🌾 PriceHarvest</div>
+            <nav class="footer-nav">
+                <a href="index.html#about">About</a>
+                <a href="index.html#dataset">Dataset</a>
+                <a href="index.html#eda">EDA</a>
+                <a href="tableau.html">Tableau</a>
+                <a href="ml.html">ML Insights</a>
+                <a href="predict.html">Predict</a>
+                <a href="mandi.html">Live Mandi</a>
+            </nav>
+            <div class="footer-copy">Data · Agmarknet Portal, Gov. of India · Usha Mittal Institute of Technology, SNDT Women's University</div>
+        </div>
+    </footer>
+
+    <script>
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'en',
+                includedLanguages: 'en,hi,mr',
+                layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+                autoDisplay: false
+            }, 'google_translate_element');
+        }
+    </script>
+    <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+    <script src="script.js"></script>
+    <script src="forecasts.js"></script>
+    <script src="predict.js"></script>
+</body>
+
+</html>

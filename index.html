@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PriceHarvest — Crop Price Intelligence</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+<style>
+    #ph-chat-btn {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        background: #2e7d32;
+        color: white;
+        border: none;
+        font-size: 32px;
+        cursor: pointer;
+        z-index: 999999999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+    }
+    
+    #ph-chat-container {
+        position: fixed;
+        bottom: 100px;
+        right: 20px;
+        width: 360px;
+        height: 520px;
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        display: none;
+        flex-direction: column;
+        z-index: 999999999;
+        font-family: Arial;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+    }
+    
+    #ph-chat-header {
+        background: #2e7d32;
+        color: white;
+        padding: 15px;
+        font-size: 20px;
+        font-weight: bold;
+    }
+    
+    #ph-chat-messages {
+        flex: 1;
+        padding: 10px;
+        overflow-y: auto;
+        background: #f5f5f5;
+    }
+    
+    .ph-msg {
+        margin: 10px 0;
+        padding: 10px;
+        border-radius: 10px;
+        max-width: 80%;
+        line-height: 1.5;
+    }
+    
+    .user-msg {
+        background: #c8e6c9;
+        margin-left: auto;
+    }
+    
+    .bot-msg {
+        background: white;
+        border: 1px solid #ddd;
+    }
+    
+    #ph-chat-input-area {
+        display: flex;
+        border-top: 1px solid #ddd;
+    }
+    
+    #ph-chat-input {
+        flex: 1;
+        padding: 12px;
+        border: none;
+        outline: none;
+        font-size: 16px;
+        background: white;
+        color: black;
+        caret-color: black;
+    }
+    
+    #ph-chat-input::placeholder {
+        color: #777;
+    }
+    
+    #ph-send-btn {
+        background: #2e7d32;
+        color: white;
+        border: none;
+        padding: 0 20px;
+        cursor: pointer;
+    }
+    
+    .quick-btn {
+        border: none;
+        background: #e8f5e9;
+        padding: 8px 12px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 13px;
+    }
+</style>
+
+<button id="ph-chat-btn">
+💬
+</button>
+
+<div id="ph-chat-container">
+
+    <div id="ph-chat-header">
+        🌾 PriceHarvest AI
+    </div>
+
+    <div id="ph-chat-messages">
+
+        <div class="ph-msg bot-msg" id="ph-initial-msg">
+            Hello! I’m PriceHarvest AI 🌾
+        </div>
+
+    </div>
+
+    <div id="ph-chat-input-area">
+
+        <input type="text" id="ph-chat-input" placeholder="Ask something...">
+
+        <button id="ph-send-btn">
+Send
+</button>
+
+    </div>
+
+</div>
+<script src="chat-config.js"></script>
+<script>
+    const chatBtn =
+        document.getElementById("ph-chat-btn");
+
+    const chatContainer =
+        document.getElementById("ph-chat-container");
+
+    const sendBtn =
+        document.getElementById("ph-send-btn");
+
+    const input =
+        document.getElementById("ph-chat-input");
+
+    const messages =
+        document.getElementById("ph-chat-messages");
+
+    chatBtn.addEventListener(
+        "click",
+        function() {
+
+            if (
+                chatContainer.style.display === "flex"
+            ) {
+
+                chatContainer.style.display = "none";
+
+            } else {
+
+                chatContainer.style.display = "flex";
+
+                setTimeout(() => {
+
+                    input.focus();
+
+                }, 200);
+
+            }
+
+        }
+    );
+
+    document.addEventListener(
+        "click",
+        function(event) {
+
+            const isClickInsideChat =
+                chatContainer.contains(event.target);
+
+            const isChatButton =
+                chatBtn.contains(event.target);
+
+            if (!isClickInsideChat &&
+                !isChatButton
+            ) {
+
+                chatContainer.style.display = "none";
+
+            }
+
+        }
+    );
+
+    function addMessage(text, type) {
+
+        const msg =
+            document.createElement("div");
+
+        msg.classList.add("ph-msg");
+        msg.classList.add(type);
+
+        msg.innerHTML = text;
+
+        messages.appendChild(msg);
+
+        setTimeout(() => {
+
+            messages.scrollTop =
+                messages.scrollHeight;
+
+        }, 100);
+
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       CHATBOT API SETTINGS
+       Paste your NEW API details here. If the URL/key is empty, or the
+       API fails / times out / returns nothing, the chatbot automatically
+       answers from the built-in knowledge base below (works offline).
+       Default request format is Gemini's generateContent API.
+       ═══════════════════════════════════════════════════════════ */
+    const CHAT_API = {
+        url: "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent", // e.g. "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent"
+        key: window.CHAT_KEY || "",
+ // paste your new API key here
+        timeoutMs: 15000,
+        // true  = questions the built-in answers understand are replied to INSTANTLY;
+        //         the API is only used for everything else (fastest).
+        // false = always ask the API first, use built-in answers only if it fails.
+        localFirst: true
+    };
+
+    const SYSTEM_PROMPT = `
+You are PriceHarvest AI.
+
+You are the AI assistant of the PriceHarvest agricultural analytics website.
+
+Support:
+- English
+- Hindi
+- Marathi
+
+Help users understand:
+- Onion, Tomato, Potato, Spinach and Cabbage price trends in Mumbai, Nashik, Nagpur, Kolhapur and Ratnagiri
+- the 30-day forecast model (Global Cross-Series LightGBM, XGBoost, LightGBM)
+- the Predict page and the Tableau dashboard
+- graphs
+- charts
+- dashboard insights
+- agriculture
+
+Keep replies:
+- short
+- natural
+- conversational
+- easy to understand
+
+Avoid:
+- long paragraphs
+- essay style replies
+- numbered lists unless needed
+
+Reply in same language as user.
+`;
+
+    /* Calls the online API. Returns reply text, or null on ANY problem. */
+    async function callOnlineAPI(message) {
+
+        if (!CHAT_API.url || !CHAT_API.key) return null;
+
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), CHAT_API.timeoutMs);
+
+        try {
+
+            const sep = CHAT_API.url.includes("?") ? "&" : "?";
+
+            const response = await fetch(
+                CHAT_API.url + sep + "key=" + encodeURIComponent(CHAT_API.key), {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    signal: controller.signal,
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: SYSTEM_PROMPT + "\nUser:\n" + message + "\n"
+                            }]
+                        }]
+                    })
+                }
+            );
+
+            if (!response.ok) return null;
+
+            const data = await response.json();
+
+            const reply =
+                data && data.candidates && data.candidates[0] &&
+                data.candidates[0].content && data.candidates[0].content.parts &&
+                data.candidates[0].content.parts[0] &&
+                data.candidates[0].content.parts[0].text;
+
+            return reply && reply.trim() ? reply : null;
+
+        } catch (error) {
+
+            console.log("Chat API failed, using built-in answers:", error);
+            return null;
+
+        } finally {
+
+            clearTimeout(timer);
+
+        }
+
+    }
+
+    /* ── BUILT-IN ANSWERS (used whenever the API is unavailable) ── */
+
+    function detectChatLang(text) {
+
+        const m = document.cookie.match(/googtrans=\/en\/([a-z]+)/);
+
+        if (m && (m[1] === "hi" || m[1] === "mr")) return m[1];
+
+        if (/[\u0900-\u097F]/.test(text)) {
+
+            // Marathi-leaning words; otherwise treat Devanagari as Hindi
+            return /(आहे|काय|किंमत|कांदा|बटाटा|टोमॅटो|मला|तुम्ही|कसे|सांगा)/.test(text) ? "mr" : "hi";
+
+        }
+
+        return "en";
+
+    }
+
+    const LOCAL_KB = [
+
+        {
+            fuzzy: "onion pyaz pyaaz kanda",
+            keys: /onion|pyaz|pyaaz|kanda|प्याज|कांदा/i,
+            en: "Onion 🧅 prices swing a lot. In our analysis they tended to be higher around Sep–Nov and lowest around Apr–May. Open the Predict page for a 30-day price range for your city, or the Tableau dashboard for the trend.",
+            hi: "प्याज 🧅 के दाम काफी ऊपर-नीचे होते हैं। हमारे विश्लेषण में सितंबर–नवंबर में दाम ऊँचे और अप्रैल–मई में सबसे कम रहे। अपने शहर की 30 दिन की कीमत सीमा के लिए Predict पेज और ट्रेंड के लिए Tableau डैशबोर्ड देखें।",
+            mr: "कांदा 🧅 दरात खूप चढउतार होतात. आमच्या विश्लेषणात सप्टेंबर–नोव्हेंबरमध्ये दर जास्त आणि एप्रिल–मेमध्ये सर्वात कमी होते. तुमच्या शहरासाठी ३० दिवसांच्या दर श्रेणीसाठी Predict पेज आणि ट्रेंडसाठी Tableau डॅशबोर्ड पहा."
+        },
+        {
+            fuzzy: "tomato tamatar tomatar",
+            keys: /tomato|tamatar|tomatar|टमाटर|टोमॅटो/i,
+            en: "Tomato 🍅 is the most volatile crop in our data — prices can spike sharply, especially around the monsoon (Jul–Aug), and tend to be lowest in Apr–May. Check the Predict page for a 30-day range in your city.",
+            hi: "टमाटर 🍅 हमारे डेटा में सबसे ज़्यादा अस्थिर फसल है — खासकर मानसून (जुलाई–अगस्त) में दाम तेज़ी से बढ़ सकते हैं और अप्रैल–मई में सबसे कम रहते हैं। अपने शहर की 30 दिन की सीमा के लिए Predict पेज देखें।",
+            mr: "टोमॅटो 🍅 आमच्या डेटामध्ये सर्वात अस्थिर पीक आहे — विशेषतः पावसाळ्यात (जुलै–ऑगस्ट) दर झपाट्याने वाढू शकतात आणि एप्रिल–मेमध्ये सर्वात कमी असतात. तुमच्या शहरासाठी ३० दिवसांच्या श्रेणीसाठी Predict पेज पहा."
+        },
+        {
+            fuzzy: "potato aloo aalu batata",
+            keys: /potato|aloo|aalu|batata|bataata|आलू|बटाटा/i,
+            en: "Potato 🥔 is covered for Mumbai, Nashik, Nagpur, Kolhapur and Ratnagiri. Use the Tableau dashboard to see its price trend and the Predict page for the next 30 days.",
+            hi: "आलू 🥔 का डेटा मुंबई, नाशिक, नागपुर, कोल्हापुर और रत्नागिरी के लिए उपलब्ध है। ट्रेंड के लिए Tableau डैशबोर्ड और अगले 30 दिनों के लिए Predict पेज देखें।",
+            mr: "बटाटा 🥔 चा डेटा मुंबई, नाशिक, नागपूर, कोल्हापूर आणि रत्नागिरीसाठी उपलब्ध आहे. ट्रेंडसाठी Tableau डॅशबोर्ड आणि पुढील ३० दिवसांसाठी Predict पेज पहा."
+        },
+        {
+            fuzzy: "spinach palak",
+            keys: /spinach|palak|पालक/i,
+            en: "Spinach 🥬 (Palak) is included for all five cities. Use the Tableau dashboard for its price trend and the Predict page for the next 30 days.",
+            hi: "पालक 🥬 सभी पाँच शहरों के लिए शामिल है। ट्रेंड के लिए Tableau डैशबोर्ड और अगले 30 दिनों के लिए Predict पेज देखें।",
+            mr: "पालक 🥬 पाचही शहरांसाठी समाविष्ट आहे. ट्रेंडसाठी Tableau डॅशबोर्ड आणि पुढील ३० दिवसांसाठी Predict पेज पहा."
+        },
+        {
+            fuzzy: "cabbage pattagobi kobi",
+            keys: /cabbage|patta\s*gobhi|pattagobi|kobi|पत्ता\s*गोभी|पत्तागोभी|कोबी|कोबीज/i,
+            en: "Cabbage 🥬 is included for all five cities. Use the Tableau dashboard for its price trend and the Predict page for the next 30 days.",
+            hi: "पत्ता गोभी 🥬 सभी पाँच शहरों के लिए शामिल है। ट्रेंड के लिए Tableau डैशबोर्ड और अगले 30 दिनों के लिए Predict पेज देखें।",
+            mr: "कोबी 🥬 पाचही शहरांसाठी समाविष्ट आहे. ट्रेंडसाठी Tableau डॅशबोर्ड आणि पुढील ३० दिवसांसाठी Predict पेज पहा."
+        },
+        {
+            fuzzy: "accuracy accurate mape error reliable",
+            keys: /mape|accura|error|how good|reliable|सटीक|सटीकता|त्रुटि|अचूक|चूक/i,
+            en: "Forecast error is measured as MAPE — the average % gap from the real price (lower is better). On unseen test data our selected models score about 22.4% vs 27.0% for a simple baseline, and beat the baseline in 17 of 25 city–crop series. See the ML Insights page for details.",
+            hi: "पूर्वानुमान की त्रुटि MAPE से मापी जाती है — असली कीमत से औसत % अंतर (कम बेहतर)। अनदेखे टेस्ट डेटा पर हमारे चुने मॉडल लगभग 22.4% रहे, जबकि सरल बेसलाइन 27.0% रही, और 25 में से 17 सीरीज़ में बेसलाइन से बेहतर रहे। विवरण ML Insights पेज पर देखें।",
+            mr: "अंदाजातील त्रुटी MAPE ने मोजली जाते — खऱ्या दरापासून सरासरी % फरक (कमी म्हणजे चांगले). न पाहिलेल्या टेस्ट डेटावर आमचे निवडलेले मॉडेल सुमारे 22.4% आणि साधी बेसलाइन 27.0% होती, तसेच 25 पैकी 17 सिरीजमध्ये बेसलाइनपेक्षा चांगले ठरले. तपशीलासाठी ML Insights पेज पहा."
+        },
+        {
+            fuzzy: "forecast forecasts predict prediction model lightgbm xgboost future",
+            keys: /forecast|predict|prediction|model|lightgbm|xgboost|future|next\s*30|30[-\s]*day|पूर्वानुमान|भविष्य|अनुमान|अंदाज|मॉडल|मॉडेल/i,
+            en: "🔮 PriceHarvest forecasts the next 30 days of prices for 25 city–crop series. The best approach was a Global Cross-Series LightGBM (alongside per-series LightGBM and XGBoost). Try it on the Predict page: pick a city and crop to see the expected price range.",
+            hi: "🔮 PriceHarvest 25 शहर–फसल सीरीज़ के लिए अगले 30 दिनों की कीमतों का पूर्वानुमान देता है। सबसे अच्छा तरीका Global Cross-Series LightGBM रहा (साथ में LightGBM और XGBoost)। Predict पेज पर शहर और फसल चुनकर अपेक्षित कीमत सीमा देखें।",
+            mr: "🔮 PriceHarvest 25 शहर–पीक सिरीजसाठी पुढील ३० दिवसांच्या दरांचा अंदाज देते. सर्वोत्तम पद्धत Global Cross-Series LightGBM ठरली (सोबत LightGBM आणि XGBoost). Predict पेजवर शहर आणि पीक निवडून अपेक्षित दर श्रेणी पहा."
+        },
+        {
+            fuzzy: "tableau dashboard chart graph visual",
+            keys: /tableau|dashboard|chart|graph|visual|डैशबोर्ड|डॅशबोर्ड|चार्ट|ग्राफ/i,
+            en: "📊 The Tableau dashboard lets you explore each crop's prices interactively — filter by city and crop to see trends, seasonality and comparisons. Open it from the Tableau link in the top menu.",
+            hi: "📊 Tableau डैशबोर्ड में आप हर फसल की कीमतें इंटरैक्टिव तरीके से देख सकते हैं — शहर और फसल चुनकर ट्रेंड, मौसमी पैटर्न और तुलना देखें। ऊपर मेन्यू में Tableau लिंक खोलें।",
+            mr: "📊 Tableau डॅशबोर्डवर तुम्ही प्रत्येक पिकाचे दर इंटरॲक्टिव्ह पद्धतीने पाहू शकता — शहर आणि पीक निवडून ट्रेंड, हंगामी पॅटर्न आणि तुलना पहा. वरच्या मेन्यूतील Tableau लिंक उघडा."
+        },
+        {
+            fuzzy: "live mandi agmarknet today current",
+            keys: /live|mandi|today|current|agmarknet|मंडी|मंडई|आज|ताज़ा|ताजे/i,
+            en: "🛒 The Live Mandi page shows current mandi prices from the Government of India's Agmarknet data for Mumbai, Nashik, Nagpur, Kolhapur and Ratnagiri. It needs the local server to be running with a data.gov.in key.",
+            hi: "🛒 Live Mandi पेज भारत सरकार के Agmarknet डेटा से मुंबई, नाशिक, नागपुर, कोल्हापुर और रत्नागिरी की ताज़ा मंडी कीमतें दिखाता है। इसके लिए लोकल सर्वर data.gov.in की-के साथ चलना चाहिए।",
+            mr: "🛒 Live Mandi पेज भारत सरकारच्या Agmarknet डेटावरून मुंबई, नाशिक, नागपूर, कोल्हापूर आणि रत्नागिरीचे ताजे मंडई दर दाखवते. त्यासाठी लोकल सर्व्हर data.gov.in कीसह चालू असावा."
+        },
+        {
+            generic: true,
+            fuzzy: "dataset data records source",
+            keys: /dataset|data\s*set|data|records|source|how many|आँकड़े|डेटा|डेटासेट/i,
+            en: "📁 The dataset has about 80,587 cleaned daily mandi price records for Onion, Tomato, Potato, Spinach and Cabbage across Mumbai, Nashik, Nagpur, Kolhapur and Ratnagiri (Jan 2021 – Jun 2026) — 25 city–crop series in total.",
+            hi: "📁 डेटासेट में प्याज, टमाटर, आलू, पालक और पत्ता गोभी के लिए मुंबई, नाशिक, नागपुर, कोल्हापुर और रत्नागिरी के लगभग 80,587 साफ़ किए गए दैनिक मंडी रिकॉर्ड हैं (जनवरी 2021 – जून 2026) — कुल 25 शहर–फसल सीरीज़।",
+            mr: "📁 डेटासेटमध्ये कांदा, टोमॅटो, बटाटा, पालक आणि कोबीचे मुंबई, नाशिक, नागपूर, कोल्हापूर आणि रत्नागिरीचे सुमारे 80,587 स्वच्छ केलेले दैनिक मंडई रेकॉर्ड आहेत (जानेवारी 2021 – जून 2026) — एकूण 25 शहर–पीक सिरीज."
+        },
+        {
+            generic: true,
+            fuzzy: "season sell volatile stable",
+            keys: /best\s*(month|time)|when.*sell|sell|season|volatil|stable|बेचना|बेचें|सीजन|मौसम|विक्री|विकावे|हंगाम/i,
+            en: "📅 Prices follow seasons: for onion and tomato, April–May has tended to be the lowest, while onion peaks around Sep–Nov and tomato around the monsoon. Tomato is the most volatile. For your exact city and crop, check the Predict page and Tableau dashboard.",
+            hi: "📅 कीमतें मौसम के हिसाब से बदलती हैं: प्याज और टमाटर में अप्रैल–मई सबसे कम रहा है, जबकि प्याज सितंबर–नवंबर में और टमाटर मानसून में ऊँचा रहता है। टमाटर सबसे अस्थिर है। अपने शहर और फसल के लिए Predict पेज और Tableau देखें।",
+            mr: "📅 दर हंगामानुसार बदलतात: कांदा आणि टोमॅटोसाठी एप्रिल–मे सर्वात कमी राहिले आहेत, तर कांदा सप्टेंबर–नोव्हेंबरमध्ये आणि टोमॅटो पावसाळ्यात जास्त असतो. टोमॅटो सर्वात अस्थिर आहे. तुमच्या शहर आणि पिकासाठी Predict पेज आणि Tableau पहा."
+        },
+        {
+            generic: true,
+            fuzzy: "price prices rate cost bhav kimmat",
+            keys: /price|rate|cost|bhav|bhaav|kimmat|kimat|भाव|कीमत|दाम|किंमत|दर/i,
+            en: "💰 I can point you to prices for Onion, Tomato, Potato, Spinach and Cabbage in Mumbai, Nashik, Nagpur, Kolhapur and Ratnagiri. Use Live Mandi for today's prices, Predict for the next 30 days, and Tableau for past trends. Which crop are you interested in?",
+            hi: "💰 मैं प्याज, टमाटर, आलू, पालक और पत्ता गोभी की मुंबई, नाशिक, नागपुर, कोल्हापुर और रत्नागिरी की कीमतों के लिए मार्गदर्शन कर सकता हूँ। आज के भाव के लिए Live Mandi, अगले 30 दिनों के लिए Predict और पुराने ट्रेंड के लिए Tableau देखें। आपको कौन-सी फसल चाहिए?",
+            mr: "💰 मी कांदा, टोमॅटो, बटाटा, पालक आणि कोबीचे मुंबई, नाशिक, नागपूर, कोल्हापूर आणि रत्नागिरीतील दर सांगण्यासाठी मार्गदर्शन करू शकतो. आजच्या दरांसाठी Live Mandi, पुढील ३० दिवसांसाठी Predict आणि जुन्या ट्रेंडसाठी Tableau पहा. तुम्हाला कोणते पीक हवे आहे?"
+        },
+        {
+            fuzzy: "thanks thank",
+            keys: /thank|thanks|धन्यवाद|शुक्रिया|आभार/i,
+            en: "You're welcome! 🌾 Ask me anything about crop prices anytime.",
+            hi: "आपका स्वागत है! 🌾 फसल की कीमतों के बारे में कभी भी पूछें।",
+            mr: "तुमचे स्वागत आहे! 🌾 पिकांच्या दरांबद्दल कधीही विचारा."
+        },
+        {
+            generic: true,
+            fuzzy: "help about",
+            keys: /help|what can you|who are you|about|मदद|सहायता|मदत|कौन|कोण/i,
+            en: "I'm PriceHarvest AI 🌾 I can help with Onion, Tomato, Potato, Spinach and Cabbage prices, the 30-day forecasts, the Predict page, the Tableau dashboard and live mandi prices. Just ask!",
+            hi: "मैं PriceHarvest AI हूँ 🌾 मैं प्याज, टमाटर, आलू, पालक और पत्ता गोभी की कीमतों, 30 दिन के पूर्वानुमान, Predict पेज, Tableau डैशबोर्ड और लाइव मंडी भाव में मदद कर सकता हूँ। पूछिए!",
+            mr: "मी PriceHarvest AI आहे 🌾 मी कांदा, टोमॅटो, बटाटा, पालक आणि कोबीचे दर, ३० दिवसांचे अंदाज, Predict पेज, Tableau डॅशबोर्ड आणि लाइव्ह मंडई दर यांमध्ये मदत करू शकतो. विचारा!"
+        }
+
+    ];
+
+    const LOCAL_DEFAULT = {
+        en: "I can help with Onion, Tomato, Potato, Spinach and Cabbage prices, 30-day forecasts, the Predict page and the Tableau dashboard. Try asking, for example: “Onion price trend” or “How accurate are the forecasts?” 🌾",
+        hi: "मैं प्याज, टमाटर, आलू, पालक और पत्ता गोभी की कीमतों, 30 दिन के पूर्वानुमान, Predict पेज और Tableau डैशबोर्ड में मदद कर सकता हूँ। जैसे पूछें: “प्याज का ट्रेंड” या “पूर्वानुमान कितने सटीक हैं?” 🌾",
+        mr: "मी कांदा, टोमॅटो, बटाटा, पालक आणि कोबीचे दर, ३० दिवसांचे अंदाज, Predict पेज आणि Tableau डॅशबोर्ड यांमध्ये मदत करू शकतो. उदा. विचारा: “कांदा दर ट्रेंड” किंवा “अंदाज किती अचूक आहेत?” 🌾"
+    };
+
+    /* typo tolerance: edit distance between two words */
+    function editDistance(a, b) {
+
+        if (Math.abs(a.length - b.length) > 2) return 3;
+
+        const dp = [];
+
+        for (let i = 0; i <= a.length; i++) {
+            dp[i] = [i];
+        }
+
+        for (let j = 1; j <= b.length; j++) {
+            dp[0][j] = j;
+        }
+
+        for (let i = 1; i <= a.length; i++) {
+            for (let j = 1; j <= b.length; j++) {
+                dp[i][j] = Math.min(
+                    dp[i - 1][j] + 1,
+                    dp[i][j - 1] + 1,
+                    dp[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
+                );
+
+                // swapped neighbouring letters (e.g. "onoin") count as one typo
+                if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
+                    dp[i][j] = Math.min(dp[i][j], dp[i - 2][j - 2] + 1);
+                }
+            }
+        }
+
+        return dp[a.length][b.length];
+
+    }
+
+    function fuzzyMatches(entry, message) {
+
+        if (!entry.fuzzy) return false;
+
+        const words = message.toLowerCase().match(/[a-z]{5,}/g) || [];
+        const targets = entry.fuzzy.split(" ");
+
+        return words.some(w => targets.some(t => {
+
+            const limit = t.length >= 7 ? 2 : 1;
+
+            return t.length >= 5 && w.length >= 5 && editDistance(w, t) <= limit;
+
+        }));
+
+    }
+
+    /* Short chit-chat: only matches when the WHOLE message is just this */
+    const SMALL_TALK = [
+        {
+            keys: /^\s*(hi+|hii+|hey+|hello+|helo+|namaste|namaskar|नमस्ते|नमस्कार)[\s!.,]*$/i,
+            en: "Hey! 👋 Ask me about crop prices, forecasts or the dashboard.",
+            hi: "नमस्ते! 👋 फसल की कीमतों, पूर्वानुमान या डैशबोर्ड के बारे में पूछिए।",
+            mr: "नमस्कार! 👋 पिकांचे दर, अंदाज किंवा डॅशबोर्डबद्दल विचारा."
+        },
+        {
+            keys: /^\s*(ok+(ay)?|k+|cool|nice|great|fine|alright|got it|understood|hmm+|accha|achha|theek hai|thik hai|ठीक है|अच्छा|ओके|ठीक आहे|छान)[\s!.,]*$/i,
+            en: "👍 Anything else you'd like to know about prices or forecasts?",
+            hi: "👍 कीमतों या पूर्वानुमान के बारे में और कुछ जानना है?",
+            mr: "👍 दर किंवा अंदाजाबद्दल आणखी काही जाणून घ्यायचे आहे का?"
+        },
+        {
+            keys: /^\s*(no+[\s,.!]*)?(that'?s|thats|that is)\s+(it|all|enough)\b.*$|^\s*(no+|nope|nah|nothing|nothing else|bye+|goodbye|see you.*|ok(ay)?[\s,]*bye|नहीं|नही|बस|बस इतना ही|नहीं बस|बाय|नाही|नको|बस एवढंच)[\s!.]*$/i,
+            en: "Alright! 🌾 I'm here whenever you need crop price help. Happy farming!",
+            hi: "ठीक है! 🌾 जब भी फसल की कीमतों में मदद चाहिए, मैं यहाँ हूँ। शुभकामनाएँ!",
+            mr: "ठीक आहे! 🌾 पिकांच्या दरांसाठी मदत हवी असेल तेव्हा मी इथे आहे. शुभेच्छा!"
+        }
+    ];
+
+    /* Returns an answer string, or null if nothing matched */
+    function findLocalAnswer(message) {
+
+        const lang = detectChatLang(message);
+
+        // 0) short chit-chat (ok, bye, hiii ...)
+        for (const entry of SMALL_TALK) {
+            if (entry.keys.test(message)) return entry[lang];
+        }
+
+        // 1) exact keyword match on specific topics
+        for (const entry of LOCAL_KB) {
+            if (!entry.generic && entry.keys.test(message)) return entry[lang];
+        }
+
+        // 2) typo-tolerant match on any topic
+        for (const entry of LOCAL_KB) {
+            if (!entry.generic && fuzzyMatches(entry, message)) return entry[lang];
+        }
+
+        // 3) general topics (price / data / seasons / help)
+        for (const entry of LOCAL_KB) {
+            if (entry.generic && (entry.keys.test(message) || fuzzyMatches(entry, message))) return entry[lang];
+        }
+
+        return null;
+
+    }
+
+    const LOCAL_DEFAULT_SHORT = {
+        en: "Hmm, I didn't catch that 🤔 Try “onion price”, “forecast accuracy” or “what is Tableau”.",
+        hi: "हम्म, यह समझ नहीं आया 🤔 “प्याज का भाव”, “पूर्वानुमान सटीकता” या “Tableau क्या है” पूछकर देखें।",
+        mr: "हम्म, हे समजले नाही 🤔 “कांदा दर”, “अंदाज अचूकता” किंवा “Tableau म्हणजे काय” विचारून पहा."
+    };
+
+    let lastWasDefault = false;
+
+    function getLocalAnswer(message) {
+
+        const lang = detectChatLang(message);
+
+        const found = findLocalAnswer(message);
+
+        if (found) {
+            lastWasDefault = false;
+            return found;
+        }
+
+        const reply = lastWasDefault ? LOCAL_DEFAULT_SHORT[lang] : LOCAL_DEFAULT[lang];
+
+        lastWasDefault = true;
+
+        return reply;
+
+    }
+
+    /* Try the online API first; fall back to built-in answers. */
+    async function askAI(message) {
+
+        if (CHAT_API.localFirst) {
+
+            const quick = findLocalAnswer(message);
+
+            if (quick) return quick;
+
+        }
+
+        const online = await callOnlineAPI(message);
+
+        if (online) return online;
+
+        return getLocalAnswer(message);
+
+    }
+
+    async function sendMessage() {
+
+        const text =
+            input.value.trim();
+
+        if (!text) return;
+
+        const lowerText =
+            text.toLowerCase();
+
+        addMessage(
+            text,
+            "user-msg"
+        );
+
+        input.value = "";
+
+        if (/^(hi+|hii+|hey+|hello+|helo+)[\s!.,]*$/.test(lowerText)) {
+
+            addMessage(
+                "Hey! 👋 What can I help you with?",
+                "bot-msg"
+            );
+
+            const quickOptions =
+                document.createElement("div");
+
+            quickOptions.innerHTML = `
+<div style="padding:10px; display:flex; flex-wrap:wrap; gap:8px;">
+
+<button class="quick-btn">
+📈 Onion Trends
+</button>
+
+<button class="quick-btn">
+🍅 Tomato Prices
+</button>
+
+<button class="quick-btn">
+🥔 Potato Analysis
+</button>
+
+<button class="quick-btn">
+🔮 Explain Forecasts
+</button>
+
+</div>
+`;
+
+            messages.appendChild(
+                quickOptions
+            );
+
+            document.querySelectorAll(".quick-btn")
+                .forEach(button => {
+
+                    button.onclick = function() {
+
+                        input.value =
+                            button.innerText;
+
+                        input.focus();
+
+                    };
+
+                });
+
+            return;
+
+        }
+
+        let typingMsg = null;
+
+        if (CHAT_API.url && CHAT_API.key &&
+            !(CHAT_API.localFirst && findLocalAnswer(text))) {
+
+            addMessage(
+                "…",
+                "bot-msg"
+            );
+
+            typingMsg =
+                messages.lastElementChild;
+
+        }
+
+        const reply =
+            await askAI(text);
+
+        if (typingMsg) typingMsg.remove();
+
+        addMessage(
+            reply,
+            "bot-msg"
+        );
+
+    }
+
+    sendBtn.onclick =
+        sendMessage;
+
+    input.addEventListener(
+        "keypress",
+        function(e) {
+
+            if (e.key === "Enter") {
+
+                sendMessage();
+
+            }
+
+        }
+    );
+</script>
+
+<body>
+
+    <div class="cursor" id="cursor"></div>
+    <div class="cursor-dot" id="cursorDot"></div>
+
+    <!-- LOADER -->
+    <div class="loader" id="loader">
+        <div class="loader-inner">
+            <div class="loader-wheat">🌾</div>
+            <div class="loader-bar">
+                <div class="loader-fill" id="loaderFill"></div>
+            </div>
+            <div class="loader-label">Loading PriceHarvest</div>
+        </div>
+    </div>
+
+
+    <!-- NAV -->
+    <nav id="navbar">
+        <div class="nav-inner">
+
+            <a class="nav-logo" href="#">
+                <span>🌾</span>
+                <span>PriceHarvest</span>
+            </a>
+
+            <ul class="nav-links" id="navLinks">
+                <li><a href="#about">About</a></li>
+                <li><a href="#dataset">Dataset</a></li>
+                <li><a href="#eda">EDA</a></li>
+                <li><a href="#insights">EDA Insights</a></li>
+                <li><a href="tableau.html">Tableau</a></li>
+                <li><a href="ml.html">ML Insights</a></li>
+                <li><a href="predict.html">Predict</a></li>
+                <li><a href="mandi.html">Live Mandi</a></li>
+            </ul>
+
+            <!-- Custom Language Switcher -->
+            <div class="lang-switcher" id="langSwitcher">
+                <button class="lang-btn" id="langBtn" aria-label="Change language">
+                    <svg class="lang-globe" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+                    <span class="lang-current" id="langCurrent">EN</span>
+                    <svg class="lang-chevron" width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 6l4 4 4-4"/></svg>
+                </button>
+                <div class="lang-dropdown" id="langDropdown">
+                    <button class="lang-opt active" data-lang="en" data-label="EN">
+                        <span class="lang-flag">🇬🇧</span>
+                        <span class="lang-name">English</span>
+                        <svg class="lang-check" width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 8l4 4 6-7"/></svg>
+                    </button>
+                    <button class="lang-opt" data-lang="hi" data-label="HI">
+                        <span class="lang-flag">🇮🇳</span>
+                        <span class="lang-name">हिन्दी</span>
+                        <svg class="lang-check" width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 8l4 4 6-7"/></svg>
+                    </button>
+                    <button class="lang-opt" data-lang="mr" data-label="MR">
+                        <span class="lang-flag">🇮🇳</span>
+                        <span class="lang-name">मराठी</span>
+                        <svg class="lang-check" width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 8l4 4 6-7"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Hidden Google Translate container – no visual element appears -->
+            <div id="google_translate_element" style="position: absolute; top: -9999px; left: -9999px; opacity: 0; pointer-events: none; width: 0; height: 0;"></div>
+            <button class="hamburger" id="hamburger">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero" id="hero"><canvas class="hero-canvas" id="heroCanvas"></canvas>
+        <div class="hero-noise"></div>
+        <div class="hero-content">
+            <div class="hero-badge slide-up" style="--i:0"><span class="badge-dot"></span> BTech Mini Project &nbsp;·&nbsp; Data Science &nbsp;·&nbsp; Final Phase</div>
+            <h1 class="hero-title"><span class="tline slide-up" style="--i:1">Crop Price</span><span class="tline tline-em slide-up" style="--i:2"><em>Analysis</em> &amp;</span><span class="tline slide-up" style="--i:3">Prediction</span></h1>
+            <p class="hero-sub slide-up" style="--i:4">Daily mandi prices for Onion, Tomato, Potato, Spinach &amp; Cabbage across Mumbai, Nashik, Nagpur, Kolhapur &amp; Ratnagiri (Jan 2021 – Jun 2026) — explored through data understanding, EDA, Tableau, ML insights &amp; 30-day price prediction.</p>
+
+            <div class="hero-stats slide-up" style="--i:6">
+                <div class="hstat"><span class="hstat-n" data-target="80587">0</span><span class="hstat-l">Cleaned Records</span></div>
+                <div class="hstat-div"></div>
+                <div class="hstat"><span class="hstat-n" data-target="5">0</span><span class="hstat-l">Crops</span></div>
+                <div class="hstat-div"></div>
+                <div class="hstat"><span class="hstat-n" data-target="5">0</span><span class="hstat-l">Cities</span></div>
+                <div class="hstat-div"></div>
+                <div class="hstat"><span class="hstat-n" data-target="25">0</span><span class="hstat-l">City–Crop Series</span></div>
+            </div>
+        </div>
+        <div class="hero-scroll">
+            <div class="scroll-mouse">
+                <div class="scroll-wheel"></div>
+            </div><span>Scroll</span></div>
+    </section>
+
+    <!-- ABOUT -->
+    <section class="about" id="about">
+        <div class="container">
+            <div class="sec-tag reveal-fade">01 · About</div>
+            <h2 class="sec-title reveal-up">What is <em>PriceHarvest?</em></h2>
+            <div class="about-grid">
+                <div class="about-copy">
+                    <p class="reveal-up" style="--d:.1s">Crop prices change with season, supply and local market conditions, which makes them hard to forecast. Understanding these patterns helps farmers, traders and policymakers.</p>
+                    <p class="reveal-up" style="--d:.2s">PriceHarvest analyses daily <strong>Modal Prices</strong> for 5 crops in 5 Maharashtra cities (Jan 2021 – Jun 2026) from the <strong>Agmarknet Portal, Government of India</strong>. That gives <strong>25 City–Crop series</strong>: 19
+                        from government records and 6 synthetic.</p>
+                    <p class="reveal-up" style="--d:.3s">Machine-learning models (XGBoost and LightGBM) forecast the next <strong>30 days</strong>. It is a decision-support tool, not a guarantee of future prices.</p>
+                </div>
+
+                <div class="feat-panel-wrap reveal-up" style="--d:.15s">
+                    <div class="feat-buttons">
+                        <button class="feat-btn active" data-target="eda"><span class="feat-icon">📊</span><span class="feat-name">Exploratory Analysis</span><svg class="feat-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3l5 5-5 5"/></svg></button>
+                        <button class="feat-btn" data-target="trend"><span class="feat-icon">🤖</span><span class="feat-name">ML Forecasting</span><svg class="feat-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3l5 5-5 5"/></svg></button>
+                        <button class="feat-btn" data-target="compare"><span class="feat-icon">🗺️</span><span class="feat-name">City Comparison</span><svg class="feat-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3l5 5-5 5"/></svg></button>
+                        <button class="feat-btn" data-target="insights"><span class="feat-icon">💡</span><span class="feat-name">Prediction & Dashboard</span><svg class="feat-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3l5 5-5 5"/></svg></button>
+                    </div>
+                    <div class="feat-content">
+                        <div class="feat-pane active" id="pane-eda">
+                            <div class="feat-pane-icon">📊</div>
+                            <h4>Exploratory Analysis</h4>
+                            <p>Daily trends, monthly and yearly patterns, crop-wise and city-wise comparison, volatility (CV %), moving averages and outlier checks across all 25 City–Crop series. Synthetic series are marked in every chart.</p>
+                        </div>
+                        <div class="feat-pane" id="pane-trend">
+                            <div class="feat-pane-icon">🤖</div>
+                            <h4>ML Forecasting</h4>
+                            <p>Per-series XGBoost and LightGBM models plus one Global Cross-Series LightGBM learn from lagged prices, rolling statistics and Fourier seasonality. Each series gets the model that validates best, and a 30-day forecast is produced
+                                recursively with a p10–p90 price range.</p>
+                        </div>
+                        <div class="feat-pane" id="pane-compare">
+                            <div class="feat-pane-icon">🗺️</div>
+                            <h4>City Comparison</h4>
+                            <p>Side-by-side price levels and volatility for Mumbai, Nashik, Nagpur, Kolhapur and Ratnagiri, with synthetic series clearly separated from government data.</p>
+                        </div>
+                        <div class="feat-pane" id="pane-insights">
+                            <div class="feat-pane-icon">💡</div>
+                            <h4>Prediction & Dashboard</h4>
+                            <p>Pick a city and crop on the Predict page for the expected 30-day price range, explore each crop in the interactive Tableau dashboard, and ask the AI chatbot questions in English, Hindi or Marathi.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- DATASET -->
+    <section class="dataset" id="dataset">
+        <div class="container">
+            <div class="sec-tag reveal-fade">02 · Dataset</div>
+            <h2 class="sec-title reveal-up">Understanding the <em>Data</em></h2>
+            <p class="sec-sub reveal-up" style="--d:.1s">Daily wholesale market records from the <strong>Agmarknet Portal, Government of India</strong> — January 2021 to June 2026. 87,453 raw rows → 80,587 after cleaning. 19 series are government records; 6 are synthetic history.</p>
+            <div class="ds-layout">
+                <div class="ds-table-box reveal-up" style="--d:.1s">
+                    <table class="ds-table">
+                        <thead>
+                            <tr>
+                                <th>Column</th>
+                                <th>Description</th>
+                                <th>Format / Values</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>Arrival_Date</code></td>
+                                <td>Date of market price record</td>
+                                <td>dd/mm/yyyy</td>
+                            </tr>
+                            <tr>
+                                <td><code>City</code></td>
+                                <td>One of 5 cities</td>
+                                <td>Mumbai / Nashik / Nagpur / Kolhapur / Ratnagiri</td>
+                            </tr>
+                            <tr>
+                                <td><code>Crop</code></td>
+                                <td>One of 5 crops</td>
+                                <td>Onion / Tomato / Potato / Spinach / Cabbage</td>
+                            </tr>
+                            <tr>
+                                <td><code>Market</code></td>
+                                <td>APMC / mandi name</td>
+                                <td>As reported</td>
+                            </tr>
+                            <tr>
+                                <td><code>Grade</code></td>
+                                <td>Commodity grade</td>
+                                <td>As reported</td>
+                            </tr>
+                            <tr>
+                                <td><code>Min_Price</code></td>
+                                <td>Minimum price on that day</td>
+                                <td>₹/Quintal</td>
+                            </tr>
+                            <tr>
+                                <td><code>Max_Price</code></td>
+                                <td>Maximum price on that day</td>
+                                <td>₹/Quintal</td>
+                            </tr>
+                            <tr>
+                                <td><code>Modal_Price</code></td>
+                                <td>Most common transaction price (forecast target)</td>
+                                <td>₹/Quintal</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="crop-stack reveal-up" style="--d:.2s">
+                    <div class="crop-tile tomato">
+                        <div class="ct-top"><span class="ct-emoji">🍅</span><span class="ct-vol-tag">Most Volatile</span></div>
+                        <div class="ct-name">Tomato</div>
+                        <div class="ct-avg">Avg ₹1,868/Qtl</div>
+                        <div class="ct-bar-bg">
+                            <div class="ct-bar-fill" style="width:89%"></div>
+                        </div>
+                        <div class="ct-cv">CV 62.8–79.3% across cities</div>
+                    </div>
+                    <div class="crop-tile onion">
+                        <div class="ct-top"><span class="ct-emoji">🧅</span><span class="ct-vol-tag">Synchronised peaks</span></div>
+                        <div class="ct-name">Onion</div>
+                        <div class="ct-avg">Avg ₹1,779/Qtl</div>
+                        <div class="ct-bar-bg">
+                            <div class="ct-bar-fill" style="width:61%"></div>
+                        </div>
+                        <div class="ct-cv">CV 42.1–55.6% across cities</div>
+                    </div>
+                    <div class="crop-tile cabbage">
+                        <div class="ct-top"><span class="ct-emoji">🥬</span><span class="ct-vol-tag">Moderate</span></div>
+                        <div class="ct-name">Cabbage</div>
+                        <div class="ct-avg">Avg ₹1,202/Qtl</div>
+                        <div class="ct-bar-bg">
+                            <div class="ct-bar-fill" style="width:63%"></div>
+                        </div>
+                        <div class="ct-cv">CV 41.4–58.9% across cities</div>
+                    </div>
+                    <div class="crop-tile spinach">
+                        <div class="ct-top"><span class="ct-emoji">🥬</span><span class="ct-vol-tag">City-dependent</span></div>
+                        <div class="ct-name">Spinach</div>
+                        <div class="ct-avg">Avg ₹1,053/Qtl</div>
+                        <div class="ct-bar-bg">
+                            <div class="ct-bar-fill" style="width:52%"></div>
+                        </div>
+                        <div class="ct-cv">CV 19.9–64.8% across cities</div>
+                    </div>
+                    <div class="crop-tile potato">
+                        <div class="ct-top"><span class="ct-emoji">🥔</span><span class="ct-vol-tag">Most Stable</span></div>
+                        <div class="ct-name">Potato</div>
+                        <div class="ct-avg">Avg ₹1,617/Qtl</div>
+                        <div class="ct-bar-bg">
+                            <div class="ct-bar-fill" style="width:40%"></div>
+                        </div>
+                        <div class="ct-cv">CV 24.8–38.7% across cities</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- EDA -->
+    <section class="eda" id="eda">
+        <div class="container">
+            <div class="sec-tag reveal-fade">03 · Raw Data &amp; EDA</div>
+            <h2 class="sec-title reveal-up">Exploratory <em>Data Analysis</em></h2>
+            <p class="sec-sub reveal-up" style="--d:.1s">See how raw prices actually behave — trends, city and crop differences, seasonality and volatility. Filter by category and click any chart to expand. Dashed lines mark synthetic series. Prices are in ₹/Quintal.</p>
+            <div class="eda-controls reveal-up" style="--d:.15s">
+                <div class="eda-filter-group"><span class="eda-filter-label">Category</span>
+                    <div class="eda-filters" id="categoryFilters">
+                        <button class="eda-filter active" data-cat="all">All Charts</button><button class="eda-filter" data-cat="distribution">Distribution</button><button class="eda-filter" data-cat="trend">Price Trends</button>
+                        <button class="eda-filter" data-cat="comparison">City Comparison</button><button class="eda-filter" data-cat="crop">Crop Comparison</button><button class="eda-filter" data-cat="seasonal">Seasonal</button></div>
+                </div>
+                <div class="eda-view-toggle"><button class="view-btn active" id="viewGrid" title="Grid view"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg></button>
+                    <button class="view-btn" id="viewList" title="List view"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="2" width="14" height="3" rx="1"/><rect x="1" y="7" width="14" height="3" rx="1"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg></button>
+                </div>
+            </div>
+            <div class="eda-count reveal-fade" style="--d:.2s">Showing <span id="chartCount">12</span> charts</div>
+            <div class="viz-masonry" id="vizGrid">
+                <div class="vcard span2" data-cat="trend" data-crop="all">
+                    <div class="vcard-img" data-src="images/eda_city_tomato.png"><img src="images/eda_city_tomato.png" alt="Tomato — City Comparison (monthly mean)" loading="lazy" />
+                        <div class="vcard-hover"><span>⤢ Expand</span></div>
+                    </div>
+                    <div class="vcard-foot"><span class="vcard-n">01</span>
+                        <div>
+                            <h4>Tomato — City Comparison (monthly mean)</h4>
+                            <p>All five cities spike together in mid-2023 — evidence of shared price movement across markets.</p>
+                            <div class="vcard-tags"><span class="vtag trend-tag">Price Trends</span><span class="vtag">Tomato</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="vcard" data-cat="distribution" data-crop="all">
+                    <div class="vcard-img" data-src="images/eda_volatility_cv.png"><img src="images/eda_volatility_cv.png" alt="Volatility (CV %) by Crop & City" loading="lazy" />
+                        <div class="vcard-hover"><span>⤢ Expand</span></div>
+                    </div>
+                    <div class="vcard-foot"><span class="vcard-n">02</span>
+                        <div>
+                            <h4>Volatility (CV %) by Crop & City</h4>
+                            <p>Tomato is the most volatile everywhere (CV 62.8–79.3%). Potato is the steadiest crop.</p>
+                            <div class="vcard-tags"><span class="vtag dist-tag">Distribution</span><span class="vtag">Volatility</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="vcard" data-cat="comparison" data-crop="all">
+                    <div class="vcard-img" data-src="images/eda_city_onion.png"><img src="images/eda_city_onion.png" alt="Onion — City Comparison" loading="lazy" />
+                        <div class="vcard-hover"><span>⤢ Expand</span></div>
+                    </div>
+                    <div class="vcard-foot"><span class="vcard-n">03</span>
+                        <div>
+                            <h4>Onion — City Comparison</h4>
+                            <p>Nagpur has the highest mean Onion price (₹2,038/Qtl); peaks in late 2023 and late 2024 appear in every city.</p>
+                            <div class="vcard-tags"><span class="vtag comp-tag">City Comparison</span><span class="vtag">Onion</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="vcard" data-cat="comparison" data-crop="all">
+                    <div class="vcard-img" data-src="images/eda_city_potato.png"><img src="images/eda_city_potato.png" alt="Potato — City Comparison" loading="lazy" />
+                        <div class="vcard-hover"><span>⤢ Expand</span></div>
+                    </div>
+                    <div class="vcard-foot"><span class="vcard-n">04</span>
+                        <div>
+                            <h4>Potato — City Comparison</h4>
+                            <p>Dashed lines are synthetic series (Kolhapur, Ratnagiri). Real series stay in a narrow band.</p>
+                            <div class="vcard-tags"><span class="vtag comp-tag">City Comparison</span><span class="vtag">Potato</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="vcard" data-cat="comparison" data-crop="all">
+                    <div class="vcard-img" data-src="images/eda_city_cabbage.png"><img src="images/eda_city_cabbage.png" alt="Cabbage — City Comparison" loading="lazy" />
+                        <div class="vcard-hover"><span>⤢ Expand</span></div>
+                    </div>
+                    <div class="vcard-foot"><span class="vcard-n">05</span>
+                        <div>
+                            <h4>Cabbage — City Comparison</h4>
+                            <p>Ratnagiri (synthetic) runs above the real cities; the other four track each other closely.</p>
+                            <div class="vcard-tags"><span class="vtag comp-tag">City Comparison</span><span class="vtag">Cabbage</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="vcard" data-cat="comparison" data-crop="all">
+                    <div class="vcard-img" data-src="images/eda_city_spinach.png"><img src="images/eda_city_spinach.png" alt="Spinach — City Comparison" loading="lazy" />
+                        <div class="vcard-hover"><span>⤢ Expand</span></div>
+                    </div>
+                    <div class="vcard-foot"><span class="vcard-n">06</span>
+                        <div>
+                            <h4>Spinach — City Comparison</h4>
+                            <p>Nagpur is far above every other city and spikes sharply; Nashik and Kolhapur stay low.</p>
+                            <div class="vcard-tags"><span class="vtag comp-tag">City Comparison</span><span class="vtag">Spinach</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="vcard span2" data-cat="seasonal" data-crop="all">
+                    <div class="vcard-img" data-src="images/eda_yearly_tomato_ratnagiri.png"><img src="images/eda_yearly_tomato_ratnagiri.png" alt="Tomato · Ratnagiri — Yearly Overlay (day of year)" loading="lazy" />
+                        <div class="vcard-hover"><span>⤢ Expand</span></div>
+                    </div>
+                    <div class="vcard-foot"><span class="vcard-n">07</span>
+                        <div>
+                            <h4>Tomato · Ratnagiri — Yearly Overlay (day of year)</h4>
+                            <p>Overlaying each year by day-of-year exposes irregular, year-specific spikes rather than a clean repeat seasonal cycle.</p>
+                            <div class="vcard-tags"><span class="vtag seas-tag">Seasonal</span><span class="vtag">Tomato</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="vcard span2" data-cat="crop" data-crop="all">
+                    <div class="vcard-img" data-src="images/eda_crop_mumbai.png"><img src="images/eda_crop_mumbai.png" alt="Mumbai — Crop Comparison" loading="lazy" />
+                        <div class="vcard-hover"><span>⤢ Expand</span></div>
+                    </div>
+                    <div class="vcard-foot"><span class="vcard-n">08</span>
+                        <div>
+                            <h4>Mumbai — Crop Comparison</h4>
+                            <p>Tomato dominates the volatility in Mumbai; Potato and Cabbage stay comparatively flat.</p>
+                            <div class="vcard-tags"><span class="vtag corr-tag">Crop Comparison</span><span class="vtag">Mumbai</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="vcard" data-cat="crop" data-crop="all">
+                    <div class="vcard-img" data-src="images/eda_crop_nagpur.png"><img src="images/eda_crop_nagpur.png" alt="Nagpur — Crop Comparison" loading="lazy" />
+                        <div class="vcard-hover"><span>⤢ Expand</span></div>
+                    </div>
+                    <div class="vcard-foot"><span class="vcard-n">09</span>
+                        <div>
+                            <h4>Nagpur — Crop Comparison</h4>
+                            <p>Spinach and Tomato both show large swings in Nagpur; Onion has broad annual humps.</p>
+                            <div class="vcard-tags"><span class="vtag corr-tag">Crop Comparison</span><span class="vtag">Nagpur</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="vcard" data-cat="crop" data-crop="all">
+                    <div class="vcard-img" data-src="images/eda_crop_nashik.png"><img src="images/eda_crop_nashik.png" alt="Nashik — Crop Comparison" loading="lazy" />
+                        <div class="vcard-hover"><span>⤢ Expand</span></div>
+                    </div>
+                    <div class="vcard-foot"><span class="vcard-n">10</span>
+                        <div>
+                            <h4>Nashik — Crop Comparison</h4>
+                            <p>Tomato spike in mid-2023 and Onion peaks in late 2023 / late 2024 are clearly visible.</p>
+                            <div class="vcard-tags"><span class="vtag corr-tag">Crop Comparison</span><span class="vtag">Nashik</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="vcard" data-cat="crop" data-crop="all">
+                    <div class="vcard-img" data-src="images/eda_crop_kolhapur.png"><img src="images/eda_crop_kolhapur.png" alt="Kolhapur — Crop Comparison" loading="lazy" />
+                        <div class="vcard-hover"><span>⤢ Expand</span></div>
+                    </div>
+                    <div class="vcard-foot"><span class="vcard-n">11</span>
+                        <div>
+                            <h4>Kolhapur — Crop Comparison</h4>
+                            <p>Dashed lines (Potato, Spinach) are synthetic history.</p>
+                            <div class="vcard-tags"><span class="vtag corr-tag">Crop Comparison</span><span class="vtag">Kolhapur</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="vcard" data-cat="crop" data-crop="all">
+                    <div class="vcard-img" data-src="images/eda_crop_ratnagiri.png"><img src="images/eda_crop_ratnagiri.png" alt="Ratnagiri — Crop Comparison" loading="lazy" />
+                        <div class="vcard-hover"><span>⤢ Expand</span></div>
+                    </div>
+                    <div class="vcard-foot"><span class="vcard-n">12</span>
+                        <div>
+                            <h4>Ratnagiri — Crop Comparison</h4>
+                            <p>Only Tomato is real government data here; the other four crops are synthetic (dashed).</p>
+                            <div class="vcard-tags"><span class="vtag corr-tag">Crop Comparison</span><span class="vtag">Ratnagiri</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="eda-empty" id="edaEmpty" style="display:none"><span>🔍</span>
+                <p>No charts match this filter.</p>
+            </div>
+            <div class="eda-summary reveal-up" style="--d:.1s">
+                <div class="esum-item"><span class="esum-val">₹12,000</span><span class="esum-lbl">Highest daily price (Tomato, Nagpur)</span></div>
+                <div class="esum-div"></div>
+                <div class="esum-item"><span class="esum-val">79.3%</span><span class="esum-lbl">Highest volatility (Tomato, Nashik CV)</span></div>
+                <div class="esum-div"></div>
+                <div class="esum-item"><span class="esum-val">₹2,038</span><span class="esum-lbl">Highest Onion mean (Nagpur /Qtl)</span></div>
+                <div class="esum-div"></div>
+                <div class="esum-item"><span class="esum-val">10</span><span class="esum-lbl">Data-entry errors removed</span></div>
+            </div>
+        </div>
+    </section>
+    <!-- LIGHTBOX -->
+    <div class="lightbox" id="lightbox">
+        <div class="lb-backdrop" id="lbBackdrop"></div>
+        <button class="lb-close" id="lbClose">✕</button>
+        <div class="lb-nav lb-prev" id="lbPrev">&#8249;</div>
+        <div class="lb-nav lb-next" id="lbNext">&#8250;</div>
+        <div class="lb-box">
+            <img src="" alt="" id="lbImg" />
+            <div class="lb-caption" id="lbCaption"></div>
+        </div>
+    </div>
+
+
+    <!-- INSIGHTS -->
+    <section class="insights" id="insights">
+        <div class="container">
+            <div class="sec-tag reveal-fade">04 · EDA Insights</div>
+            <h2 class="sec-title reveal-up">What the <em>Data Reveals</em></h2>
+            <p class="sec-sub reveal-up">Key takeaways from the raw price behaviour above — before any machine learning.</p>
+            <div class="ins-grid">
+                <div class="ins-card reveal-up" style="--d:0.00s">
+                    <div class="ins-bar" style="background:#EF4444"></div>
+                    <div class="ins-idx">01</div>
+                    <h3>Tomato is the Most Volatile</h3>
+                    <p>Tomato CV is 62.8–79.3% in every city, with daily prices up to ₹12,000/Qtl (Nagpur) and a sharp cross-city spike in mid-2023.</p>
+                    <div class="ins-chip" style="--c:#FEE2E2;--t:#DC2626">CV up to 79.3% · Nashik</div>
+                </div>
+                <div class="ins-card reveal-up" style="--d:0.08s">
+                    <div class="ins-bar" style="background:#10B981"></div>
+                    <div class="ins-idx">02</div>
+                    <h3>Potato is the Most Stable</h3>
+                    <p>Potato has the lowest CV of the five crops: 29.8–35.6% on the real series (24.8–38.7% including synthetic Kolhapur and Ratnagiri).</p>
+                    <div class="ins-chip" style="--c:#D1FAE5;--t:#059669">CV 29.8–35.6% · real</div>
+                </div>
+                <div class="ins-card reveal-up" style="--d:0.16s">
+                    <div class="ins-bar" style="background:#3B82F6"></div>
+                    <div class="ins-idx">03</div>
+                    <h3>Spinach Depends on the City</h3>
+                    <p>Nagpur Spinach averages ₹1,900/Qtl (CV 64.8%) versus ₹537 in Nashik and ₹901 in Mumbai — the widest city gap of any crop.</p>
+                    <div class="ins-chip" style="--c:#DBEAFE;--t:#2563EB">₹1,900 vs ₹537</div>
+                </div>
+                <div class="ins-card reveal-up" style="--d:0.24s">
+                    <div class="ins-bar" style="background:#8B5CF6"></div>
+                    <div class="ins-idx">04</div>
+                    <h3>Onion Peaks Move Together</h3>
+                    <p>All five cities peak together in late 2023 and late 2024. Nagpur has the highest mean Onion price at ₹2,038/Qtl.</p>
+                    <div class="ins-chip" style="--c:#EDE9FE;--t:#7C3AED">Synchronised peaks</div>
+                </div>
+                <div class="ins-card reveal-up" style="--d:0.32s">
+                    <div class="ins-bar" style="background:#EF4444"></div>
+                    <div class="ins-idx">05</div>
+                    <h3>Highest Average Price</h3>
+                    <p>Mumbai Tomato has the highest mean modal price of all 25 series at ₹2,305/Qtl, followed by Nagpur Tomato (₹2,060) and Nagpur Onion (₹2,038).</p>
+                    <div class="ins-chip" style="--c:#FEE2E2;--t:#DC2626">Mumbai Tomato ₹2,305</div>
+                </div>
+                <div class="ins-card reveal-up" style="--d:0.40s">
+                    <div class="ins-bar" style="background:#059669"></div>
+                    <div class="ins-idx">06</div>
+                    <h3>19 Real + 6 Synthetic Series</h3>
+                    <p>Ratnagiri (Cabbage, Onion, Potato, Spinach) and Kolhapur (Potato, Spinach) use synthetic history. They are tagged everywhere and never presented as government data.</p>
+                    <div class="ins-chip" style="--c:#D1FAE5;--t:#059669">19 Govt · 6 Synthetic</div>
+                </div>
+                <div class="ins-card reveal-up" style="--d:0.48s">
+                    <div class="ins-bar" style="background:#F59E0B"></div>
+                    <div class="ins-idx">07</div>
+                    <h3>Data-Entry Errors Removed</h3>
+                    <p>10 rows above 10× the series median were dropped, including one Nashik Onion record of ₹917,588,483/Qtl.</p>
+                    <div class="ins-chip" style="--c:#FEF3C7;--t:#D97706">10 rows dropped</div>
+                </div>
+                <div class="ins-card reveal-up" style="--d:0.56s">
+                    <div class="ins-bar" style="background:#8B5CF6"></div>
+                    <div class="ins-idx">08</div>
+                    <h3>Sparse Series Need Caution</h3>
+                    <p>Ratnagiri series had 44–46% of days gap-filled in the EDA (≤10-day linear interpolation); Kolhapur Spinach 52.9%.</p>
+                    <div class="ins-chip" style="--c:#EDE9FE;--t:#7C3AED">Up to 52.9% imputed</div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- TABLEAU -->
+    <section class="dashboard-section" id="dashboard">
+        <div class="container">
+            <div class="sec-tag reveal-fade">05 · Tableau</div>
+            <h2 class="sec-title reveal-up">Tableau <em>Dashboard</em></h2>
+            <p class="sec-sub reveal-up" style="--d:.1s">Explore each crop interactively — price trends, city comparisons, seasonality and volatility — with crop, city, market and time-period filters.</p>
+            <div class="hero-actions" style="margin-top:2rem"><a href="tableau.html" class="btn-primary magnetic"><span class="btn-bg"></span><span class="btn-text">Open Tableau Dashboard</span><span class="btn-icon">📊</span></a><a href="predict.html" class="btn-ghost">Predict Prices <span class="btn-arrow">→</span></a></div>
+        </div>
+    </section>
+    <!-- ML -->
+    <section class="insights" id="ml">
+        <div class="container">
+            <div class="sec-tag reveal-fade">06 · Machine Learning</div>
+            <h2 class="sec-title reveal-up">What the <em>ML Models</em> Found</h2>
+            <p class="sec-sub reveal-up">Machine-learning models trained on the same history forecast the next 30 days for all 25 city–crop series and beat a simple baseline on most of them.</p>
+            <div class="eda-summary reveal-up">
+                <div class="esum-item"><span class="esum-val">17 / 25</span><span class="esum-lbl">Series where ML beat the baseline (test)</span></div>
+                <div class="esum-div"></div>
+                <div class="esum-item"><span class="esum-val">22.4%</span><span class="esum-lbl">Average forecast error (test MAPE)</span></div>
+                <div class="esum-div"></div>
+                <div class="esum-item"><span class="esum-val">27.0%</span><span class="esum-lbl">Baseline error (last-7-day median)</span></div>
+            </div>
+            <div class="hero-actions" style="margin-top:2.5rem"><a href="ml.html" class="btn-ghost">ML Insights <span class="btn-arrow">→</span></a><a href="predict.html" class="btn-primary magnetic"><span class="btn-bg"></span><span class="btn-text">Predict Prices</span><span class="btn-icon">🔮</span></a></div>
+        </div>
+    </section>
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="container footer-row">
+            <div class="footer-logo">🌾 PriceHarvest</div>
+            <nav class="footer-nav"><a href="#about">About</a><a href="#dataset">Dataset</a><a href="#eda">EDA</a><a href="tableau.html">Tableau</a><a href="ml.html">ML Insights</a><a href="predict.html">Predict</a><a href="mandi.html">Live Mandi</a></nav>
+            <div class="footer-copy">Data · Agmarknet Portal, Gov. of India · UMIT, SNDT Women's University</div>
+        </div>
+    </footer>
+
+    <script>
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'en',
+                includedLanguages: 'en,hi,mr',
+                layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+                autoDisplay: false
+            }, 'google_translate_element');
+        }
+    </script>
+    <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>ript src="script.js"></script>
+</body>
+
+</html>

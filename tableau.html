@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Tableau Dashboard — PriceHarvest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="style.css"/><style>
+.tb-tabs{display:flex;gap:.6rem;flex-wrap:wrap;margin:1.5rem 0 1rem}
+.tb-tab{font:500 .95rem 'Outfit',sans-serif;padding:.7rem 1.3rem;border-radius:999px;border:1px solid rgba(120,120,120,.35);background:transparent;color:inherit;cursor:pointer;transition:all .2s}
+.tb-tab:hover{border-color:#10B981;transform:translateY(-1px)}
+.tb-tab.active{background:#10B981;border-color:#10B981;color:#fff}
+.tb-frame-wrap{position:relative;min-height:300px;border-radius:14px;overflow:hidden}
+.tb-frame-wrap iframe{width:100%;height:850px;border:0;display:block}
+.tb-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:.7}
+@media(max-width:768px){.tb-frame-wrap iframe{height:700px}.tb-tab{flex:1 1 100%;text-align:center}}
+</style>
+</head>
+<body>
+<div class="cursor" id="cursor"></div><div class="cursor-dot" id="cursorDot"></div>
+<div class="loader" id="loader"><div class="loader-inner"><div class="loader-wheat">🌾</div><div class="loader-bar"><div class="loader-fill" id="loaderFill"></div></div><div class="loader-label">Loading PriceHarvest</div></div></div>
+<nav id="navbar"><div class="nav-inner"><a class="nav-logo" href="index.html"><span>🌾</span><span>PriceHarvest</span></a>
+<ul class="nav-links" id="navLinks">
+            <li><a href="index.html#about">About</a></li><li><a href="index.html#dataset">Dataset</a></li><li><a href="index.html#eda">EDA</a></li><li><a href="index.html#insights">EDA Insights</a></li>
+            <li><a href="tableau.html">Tableau</a></li><li><a href="ml.html">ML Insights</a></li><li><a href="predict.html">Predict</a></li>
+                <li><a href="mandi.html">Live Mandi</a></li>
+        </ul>
+<!-- Custom Language Switcher -->
+            <div class="lang-switcher" id="langSwitcher">
+                <button class="lang-btn" id="langBtn" aria-label="Change language">
+                    <svg class="lang-globe" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+                    <span class="lang-current" id="langCurrent">EN</span>
+                    <svg class="lang-chevron" width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 6l4 4 4-4"/></svg>
+                </button>
+                <div class="lang-dropdown" id="langDropdown">
+                    <button class="lang-opt active" data-lang="en" data-label="EN">
+                        <span class="lang-flag">🇬🇧</span>
+                        <span class="lang-name">English</span>
+                        <svg class="lang-check" width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 8l4 4 6-7"/></svg>
+                    </button>
+                    <button class="lang-opt" data-lang="hi" data-label="HI">
+                        <span class="lang-flag">🇮🇳</span>
+                        <span class="lang-name">हिन्दी</span>
+                        <svg class="lang-check" width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 8l4 4 6-7"/></svg>
+                    </button>
+                    <button class="lang-opt" data-lang="mr" data-label="MR">
+                        <span class="lang-flag">🇮🇳</span>
+                        <span class="lang-name">मराठी</span>
+                        <svg class="lang-check" width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 8l4 4 6-7"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Hidden Google Translate container – no visual element appears -->
+            <div id="google_translate_element" style="position: absolute; top: -9999px; left: -9999px; opacity: 0; pointer-events: none; width: 0; height: 0;"></div>
+            <button class="hamburger" id="hamburger">
+                <span></span><span></span><span></span>
+            </button>
+</div></nav>
+<section class="hero page-hero" id="hero"><canvas class="hero-canvas" id="heroCanvas"></canvas><div class="hero-noise"></div>
+<div class="hero-content"><div class="hero-badge slide-up" style="--i:0"><span class="badge-dot"></span> Tableau Dashboard</div><h1 class="hero-title"><span class="tline slide-up" style="--i:1">Tableau <em>Dashboard</em></span></h1><p class="hero-sub slide-up" style="--i:2">Interactive exploration and forecasting prices of PriceHarvest price data.</p></div></section>
+<section class="dashboard-section" style="padding:80px 8%"><div class="container"><div class="sec-tag reveal-fade">01 · Tableau</div><h2 class="sec-title reveal-up">Interactive <em>Dashboard</em></h2>
+<p class="sec-sub">Explore each crop interactively — price trends, city-wise comparisons, seasonal patterns and volatility. Use the crop, city, market and time-period filters inside the dashboard.</p>
+<div class="tb-tabs" id="tbTabs" role="tablist">
+  <button class="tb-tab active" role="tab" data-view="Overview">📊 Overview</button>
+  <button class="tb-tab" role="tab" data-view="PriceAnalysis">📈 Price Analysis</button>
+  <button class="tb-tab" role="tab" data-view="MLForecasting">🤖 ML Forecasting</button>
+</div>
+<div class="dashboard-container tb-frame-wrap" id="tbFrame">
+  <div class="tb-loading" id="tbLoading">Loading dashboard…</div>
+</div>
+<div class="hero-actions" style="margin-top:1.5rem">
+  <a id="tbOpen" class="btn-primary" target="_blank" rel="noopener"><span class="btn-bg"></span><span class="btn-text">Open in Tableau</span><span class="btn-icon">↗</span></a>
+  <a href="predict.html" class="btn-ghost">Predict Prices <span class="btn-arrow">→</span></a>
+</div>
+<div class="ins-grid" style="margin-top:2.5rem"><div class="ins-card"><div class="ins-bar" style="background:#2563EB"></div><h3>Overall Modal Price Trend</h3><p>Shows the overall monthly movement of modal crop prices from 2021 to June 2026, highlighting periods of increase and decrease.</p></div><div class="ins-card"><div class="ins-bar" style="background:#10B981"></div><h3>60-Day Recursive Test MAPE vs Baseline</h3><p>Compares the forecasting model's error with a baseline. The Test MAPE is 22.38% compared with the baseline MAPE of 26.97%.</p></div><div class="ins-card"><div class="ins-bar" style="background:#EF4444"></div><h3>30-Day Recursive Validation MAPE</h3><p>Compares the validation error of different forecasting approaches. Global MAPE = 17.81%, Last7Med = 19.12%, LGBM = 20.53%, Seasonal Naive = 34.42%, and XGB = 19.15%.</p></div><div class="ins-card"><div class="ins-bar" style="background:#8B5CF6"></div><h3>Price Variability by Crop</h3><p>Shows price fluctuation using standard deviation. Tomato has the highest variability, while Potato and Cabbage have relatively lower variability.</p></div></div></div></section>
+<footer class="footer"><div class="container footer-row"><div class="footer-logo">🌾 PriceHarvest</div>
+<nav class="footer-nav"><a href="index.html#about">About</a><a href="index.html#dataset">Dataset</a><a href="index.html#eda">EDA</a><a href="tableau.html">Tableau</a><a href="ml.html">ML Insights</a><a href="predict.html">Predict</a><a href="mandi.html">Live Mandi</a></nav>
+<div class="footer-copy">Data · Agmarknet Portal, Gov. of India · Usha Mittal Institute of Technology, SNDT Women's University</div></div></footer>
+<script>function googleTranslateElementInit(){new google.translate.TranslateElement({pageLanguage:'en',includedLanguages:'en,hi,mr',layout:google.translate.TranslateElement.InlineLayout.SIMPLE,autoDisplay:false},'google_translate_element');}</script>
+<script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+<script src="script.js"></script><script>(function(){
+var BASE="https://public.tableau.com/views/PriceHarvestAgriculturalCropPriceAnalysisPrediction/";
+var PARAMS="?:embed=y&:showVizHome=no&:display_count=n&:tabs=no&:toolbar=yes&:showAppBanner=false&:language=en-US";
+var frame=document.getElementById("tbFrame"),open=document.getElementById("tbOpen"),tabs=document.querySelectorAll(".tb-tab");
+var cache={};
+function show(view){
+  Object.keys(cache).forEach(function(k){cache[k].style.display=(k===view)?"block":"none";});
+  if(!cache[view]){
+    var f=document.createElement("iframe");
+    f.src=BASE+view+PARAMS;f.title="PriceHarvest Tableau – "+view;f.allowFullscreen=true;f.loading="lazy";
+    f.onload=function(){var l=document.getElementById("tbLoading");if(l)l.remove();};
+    frame.appendChild(f);cache[view]=f;
+  }
+  open.href=BASE+view+"?:language=en-US&:display_count=n&:origin=viz_share_link";
+  tabs.forEach(function(t){t.classList.toggle("active",t.dataset.view===view);});
+}
+tabs.forEach(function(t){t.addEventListener("click",function(){show(t.dataset.view);});});
+show("Overview");
+})();</script>
+</body></html>

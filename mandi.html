@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Live Mandi Prices — PriceHarvest</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
+    <style>
+        /* ── Live Mandi page extras (keeps existing theme) ── */
+        
+        .mandi-hero {
+            padding: 7.5rem 0 2.5rem;
+            background: linear-gradient(165deg, #0E2A1A 0%, #1A4731 55%, #276249 100%);
+            color: #FAF7F2;
+            text-align: center;
+        }
+        
+        .mandi-hero .sec-tag {
+            color: #F0BC4E;
+            letter-spacing: 0.12em;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+        
+        .mandi-hero h1 {
+            font-family: var(--font-d);
+            font-size: clamp(2.2rem, 5vw, 3.4rem);
+            font-weight: 700;
+            line-height: 1.15;
+            margin-bottom: 0.75rem;
+        }
+        
+        .mandi-hero h1 em {
+            font-style: italic;
+            color: #F0BC4E;
+        }
+        
+        .mandi-hero p {
+            max-width: 640px;
+            margin: 0 auto;
+            opacity: 0.88;
+            font-size: 1.05rem;
+            line-height: 1.6;
+        }
+        
+        .mandi-live-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            background: rgba(240, 188, 78, 0.18);
+            border: 1px solid rgba(240, 188, 78, 0.45);
+            color: #F0BC4E;
+            padding: 0.35rem 0.9rem;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            margin-bottom: 1.25rem;
+        }
+        
+        .mandi-live-pill .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4ade80;
+            box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.6);
+            animation: pulse-dot 1.6s infinite;
+        }
+        
+        @keyframes pulse-dot {
+            0% {
+                box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.55);
+            }
+            70% {
+                box-shadow: 0 0 0 8px rgba(74, 222, 128, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(74, 222, 128, 0);
+            }
+        }
+        
+        .mandi-section {
+            padding: 2.5rem 0 4rem;
+        }
+        
+        .mandi-filter-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: var(--r-lg);
+            padding: 1.5rem 1.75rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 1.75rem;
+        }
+        
+        .mandi-filter-card h2 {
+            font-family: var(--font-d);
+            font-size: 1.45rem;
+            color: var(--forest-2);
+            margin-bottom: 0.35rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .mandi-filter-card .sub {
+            color: var(--slate-3);
+            font-size: 0.92rem;
+            margin-bottom: 1.25rem;
+        }
+        
+        .mandi-filters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1rem;
+            align-items: end;
+        }
+        
+        .mandi-filters label {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--slate-2);
+            letter-spacing: 0.02em;
+        }
+        
+        .mandi-filters select,
+        .mandi-filters input {
+            font-family: var(--font-b);
+            font-size: 0.95rem;
+            padding: 0.7rem 0.9rem;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            background: var(--cream);
+            color: var(--slate);
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        
+        .mandi-filters select:focus,
+        .mandi-filters input:focus {
+            border-color: var(--forest-3);
+            box-shadow: 0 0 0 3px rgba(39, 98, 73, 0.15);
+        }
+        
+        .mandi-search-btn {
+            font-family: var(--font-b);
+            font-weight: 600;
+            font-size: 0.95rem;
+            padding: 0.75rem 1.4rem;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #1A4731, #276249);
+            color: #fff;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
+            transition: transform 0.15s, box-shadow 0.2s;
+            box-shadow: 0 4px 14px rgba(26, 71, 49, 0.28);
+        }
+        
+        .mandi-search-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(26, 71, 49, 0.35);
+        }
+        
+        .mandi-search-btn:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .mandi-api-note {
+            margin-top: 1rem;
+            padding: 0.75rem 1rem;
+            background: #F0EBE3;
+            border-radius: 10px;
+            font-size: 0.82rem;
+            color: var(--slate-2);
+            line-height: 1.5;
+        }
+        
+        .mandi-api-note code {
+            background: rgba(14, 42, 26, 0.08);
+            padding: 0.1rem 0.35rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+        
+        .mandi-api-note a {
+            color: var(--forest-3);
+            font-weight: 600;
+            text-decoration: underline;
+        }
+        
+        .mandi-status {
+            min-height: 1.5rem;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            color: var(--slate-3);
+        }
+        
+        .mandi-status.loading {
+            color: var(--forest-3);
+        }
+        
+        .mandi-status.error {
+            color: #b91c1c;
+        }
+        
+        .mandi-status.ok {
+            color: var(--forest-2);
+        }
+        
+        .mandi-table-wrap {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: var(--r-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+        
+        .mandi-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.92rem;
+        }
+        
+        .mandi-table thead {
+            background: #F5F0E8;
+        }
+        
+        .mandi-table th {
+            text-align: left;
+            padding: 0.95rem 1.1rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--slate-2);
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+        
+        .mandi-table th.modal-col {
+            color: var(--forest-3);
+            background: rgba(39, 98, 73, 0.08);
+        }
+        
+        .mandi-table td {
+            padding: 1rem 1.1rem;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+            color: var(--slate);
+        }
+        
+        .mandi-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .mandi-table tbody tr:hover {
+            background: rgba(39, 98, 73, 0.04);
+        }
+        
+        .mandi-commodity {
+            font-weight: 600;
+            color: var(--forest-2);
+        }
+        
+        .mandi-variety {
+            display: inline-block;
+            margin-top: 0.2rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--slate-3);
+            background: var(--cream-2);
+            padding: 0.15rem 0.5rem;
+            border-radius: 6px;
+        }
+        
+        .mandi-market {
+            font-weight: 500;
+        }
+        
+        .mandi-market small {
+            display: block;
+            margin-top: 0.15rem;
+            color: var(--slate-3);
+            font-size: 0.78rem;
+            font-weight: 400;
+        }
+        
+        .mandi-price {
+            font-variant-numeric: tabular-nums;
+            font-weight: 500;
+        }
+        
+        .mandi-modal {
+            font-weight: 700;
+            font-size: 1.05rem;
+            color: var(--forest-3);
+            background: rgba(39, 98, 73, 0.06);
+        }
+        
+        .mandi-modal .unit {
+            display: block;
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: var(--slate-3);
+            letter-spacing: 0.04em;
+            margin-top: 0.1rem;
+        }
+        
+        .mandi-date {
+            white-space: nowrap;
+            color: var(--slate-2);
+            font-size: 0.88rem;
+        }
+        
+        .mandi-empty {
+            text-align: center;
+            padding: 3rem 1.5rem;
+            color: var(--slate-3);
+        }
+        
+        .mandi-empty strong {
+            display: block;
+            color: var(--slate-2);
+            margin-bottom: 0.35rem;
+        }
+        
+        .mandi-quick {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .mandi-chip {
+            font-family: var(--font-b);
+            font-size: 0.8rem;
+            font-weight: 500;
+            padding: 0.4rem 0.85rem;
+            border-radius: 999px;
+            border: 1.5px solid var(--border);
+            background: var(--cream);
+            color: var(--slate-2);
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s, color 0.15s;
+        }
+        
+        .mandi-chip:hover {
+            border-color: var(--forest-3);
+            color: var(--forest-2);
+            background: rgba(39, 98, 73, 0.06);
+        }
+        
+        @media (max-width: 720px) {
+            .mandi-table th:nth-child(3),
+            .mandi-table td:nth-child(3),
+            .mandi-table th:nth-child(4),
+            .mandi-table td:nth-child(4) {
+                display: none;
+            }
+            .mandi-filters {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="cursor" id="cursor"></div>
+    <div class="cursor-dot" id="cursorDot"></div>
+
+    <div class="loader" id="loader">
+        <div class="loader-inner">
+            <div class="loader-wheat">🌾</div>
+            <div class="loader-bar">
+                <div class="loader-fill" id="loaderFill"></div>
+            </div>
+            <div class="loader-label">Loading PriceHarvest</div>
+        </div>
+    </div>
+
+    <nav id="navbar">
+        <div class="nav-inner">
+            <a class="nav-logo" href="index.html"><span>🌾</span><span>PriceHarvest</span></a>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="index.html#about">About</a></li>
+                <li><a href="index.html#dataset">Dataset</a></li>
+                <li><a href="index.html#eda">EDA</a></li>
+                <li><a href="index.html#insights">EDA Insights</a></li>
+                <li><a href="tableau.html">Tableau</a></li>
+                <li><a href="ml.html">ML Insights</a></li>
+                <li><a href="predict.html">Predict</a></li>
+                <li><a href="mandi.html" class="active">Live Mandi</a></li>
+            </ul>
+
+            <div class="lang-switcher" id="langSwitcher">
+                <button class="lang-btn" id="langBtn" aria-label="Change language">
+                    <svg class="lang-globe" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
+                        <path d="M2 12h20"/>
+                    </svg>
+                    <span class="lang-current" id="langCurrent">EN</span>
+                    <svg class="lang-chevron" width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M4 6l4 4 4-4"/>
+                    </svg>
+                </button>
+                <div class="lang-dropdown" id="langDropdown">
+                    <button class="lang-opt active" data-lang="en" data-label="EN"><span class="lang-flag">🇬🇧</span> English</button>
+                    <button class="lang-opt" data-lang="hi" data-label="HI"><span class="lang-flag">🇮🇳</span> हिन्दी</button>
+                    <button class="lang-opt" data-lang="mr" data-label="MR"><span class="lang-flag">🇮🇳</span> मराठी</button>
+                </div>
+            </div>
+            <div id="google_translate_element" style="position:absolute;top:-9999px;left:-9999px;opacity:0;pointer-events:none;width:0;height:0;"></div>
+
+            <button class="nav-toggle" id="navToggle" aria-label="Menu">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </nav>
+
+    <header class="mandi-hero">
+        <div class="container">
+            <div class="mandi-live-pill"><span class="dot"></span> LIVE · Agmarknet</div>
+            <div class="sec-tag">Real Government Data</div>
+            <h1>Live <em>Mandi</em> Prices</h1>
+            <p>Real-time agricultural commodity prices sourced directly from the Government of India Agmarknet portal (data.gov.in) — for Onion, Tomato, Potato, Spinach &amp; Cabbage across Maharashtra markets.</p>
+        </div>
+    </header>
+
+    <section class="mandi-section">
+        <div class="container">
+            <div class="mandi-filter-card">
+                <h2>🔍 Filter Market Data</h2>
+                <p class="sub">Select state, market (city), and commodity — then fetch today’s official min / max / modal prices (₹ per Quintal).</p>
+
+                <div class="mandi-filters">
+                    <label>
+                        State
+                        <select id="mandiState">
+                            <option value="Maharashtra" selected>Maharashtra</option>
+                        </select>
+                    </label>
+                    <label>
+                        Market (City / Mandi)
+                        <select id="mandiMarket">
+                            <option value="">All Markets</option>
+                            <option value="Mumbai">Mumbai</option>
+                            <option value="Nashik">Nashik</option>
+                            <option value="Nagpur">Nagpur</option>
+                            <option value="Kolhapur">Kolhapur</option>
+                            <option value="Ratnagiri">Ratnagiri</option>
+                            <option value="Pune">Pune</option>
+                            <option value="Ahmednagar">Ahmednagar</option>
+                            <option value="Solapur">Solapur</option>
+                            <option value="Sangli">Sangli</option>
+                            <option value="Satara">Satara</option>
+                            <option value="Aurangabad">Aurangabad</option>
+                            <option value="Jalna">Jalna</option>
+                            <option value="Latur">Latur</option>
+                            <option value="Akola">Akola</option>
+                            <option value="Amravati">Amravati</option>
+                        </select>
+                    </label>
+                    <label>
+                        Commodity
+                        <select id="mandiCommodity">
+                            <option value="">All (5 project crops)</option>
+                            <option value="Onion">Onion</option>
+                            <option value="Tomato">Tomato</option>
+                            <option value="Potato">Potato</option>
+                            <option value="Spinach">Spinach</option>
+                            <option value="Cabbage">Cabbage</option>
+                        </select>
+                    </label>
+                    <label>
+                        &nbsp;
+                        <button type="button" class="mandi-search-btn" id="mandiSearchBtn">
+                            <span>🔎</span> Get Prices
+                        </button>
+                    </label>
+                </div>
+
+                <div class="mandi-quick">
+                    <span style="font-size:0.8rem;color:var(--slate-3);align-self:center;margin-right:0.25rem;">Quick:</span>
+                    <button type="button" class="mandi-chip" data-c="Onion" data-m="Nashik">Onion · Nashik</button>
+                    <button type="button" class="mandi-chip" data-c="Tomato" data-m="Nagpur">Tomato · Nagpur</button>
+                    <button type="button" class="mandi-chip" data-c="Potato" data-m="Mumbai">Potato · Mumbai</button>
+                    <button type="button" class="mandi-chip" data-c="Spinach" data-m="Kolhapur">Spinach · Kolhapur</button>
+                    <button type="button" class="mandi-chip" data-c="Cabbage" data-m="Ratnagiri">Cabbage · Ratnagiri</button>
+                    <button type="button" class="mandi-chip" data-c="Onion" data-m="">Onion · All MH</button>
+                    <button type="button" class="mandi-chip" data-c="Tomato" data-m="">Tomato · All MH</button>
+                </div>
+
+                <div class="mandi-api-note">
+                    <strong>API source:</strong> <a href="https://www.data.gov.in/resources/current-daily-price-various-commodities-various-markets-mandi" target="_blank" rel="noopener">data.gov.in — Current Daily Price of Various Commodities from Various Markets (Mandi)</a>                    · Resource ID <code>9ef84268-d588-465a-a308-a864a43d0070</code>. Uses the public demo key (max ~10 rows). For full results, get a free key at
+                    <a href="https://www.data.gov.in/" target="_blank" rel="noopener">data.gov.in</a> → My Account → API Key, then paste it in <code>mandi.js</code> (<code>API_KEY</code>).
+                </div>
+            </div>
+
+            <div class="mandi-status" id="mandiStatus">Select filters and click <strong>Get Prices</strong> to load today’s official mandi rates.</div>
+
+            <div class="mandi-table-wrap">
+                <table class="mandi-table" id="mandiTable">
+                    <thead>
+                        <tr>
+                            <th>Commodity / Variety</th>
+                            <th>Market / District</th>
+                            <th>Min Price</th>
+                            <th>Max Price</th>
+                            <th class="modal-col">Modal Price</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="mandiBody">
+                        <tr>
+                            <td colspan="6" class="mandi-empty">
+                                <strong>No data loaded yet</strong> Choose a crop and city above, then press Get Prices.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container footer-row">
+            <div class="footer-logo">🌾 PriceHarvest</div>
+            <nav class="footer-nav">
+                <a href="index.html#about">About</a>
+                <a href="index.html#dataset">Dataset</a>
+                <a href="index.html#eda">EDA</a>
+                <a href="tableau.html">Tableau</a>
+                <a href="ml.html">ML Insights</a>
+                <a href="predict.html">Predict</a>
+                <a href="mandi.html">Live Mandi</a>
+            </nav>
+            <div class="footer-copy">Data · Agmarknet Portal, Gov. of India · Usha Mittal Institute of Technology, SNDT Women's University</div>
+        </div>
+    </footer>
+
+    <script>
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'en',
+                includedLanguages: 'en,hi,mr',
+                layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+                autoDisplay: false
+            }, 'google_translate_element');
+        }
+    </script>
+    <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+    <script src="script.js"></script>
+    <script src="mandi.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,7 @@
+chat-config.js
+.env
+__pycache__/
+*.pyc
+.DS_Store
+__MACOSX/
+.ipynb_checkpoints/

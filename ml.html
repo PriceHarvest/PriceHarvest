@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ML Insights — PriceHarvest</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+    <div class="cursor" id="cursor"></div>
+    <div class="cursor-dot" id="cursorDot"></div>
+    <div class="loader" id="loader">
+        <div class="loader-inner">
+            <div class="loader-wheat">🌾</div>
+            <div class="loader-bar">
+                <div class="loader-fill" id="loaderFill"></div>
+            </div>
+            <div class="loader-label">Loading PriceHarvest</div>
+        </div>
+    </div>
+    <nav id="navbar">
+        <div class="nav-inner"><a class="nav-logo" href="index.html"><span>🌾</span><span>PriceHarvest</span></a>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="index.html#about">About</a></li>
+                <li><a href="index.html#dataset">Dataset</a></li>
+                <li><a href="index.html#eda">EDA</a></li>
+                <li><a href="index.html#insights">EDA Insights</a></li>
+                <li><a href="tableau.html">Tableau</a></li>
+                <li><a href="ml.html">ML Insights</a></li>
+                <li><a href="predict.html">Predict</a></li>
+                <li><a href="mandi.html">Live Mandi</a></li>
+            </ul>
+            <!-- Custom Language Switcher -->
+            <div class="lang-switcher" id="langSwitcher">
+                <button class="lang-btn" id="langBtn" aria-label="Change language">
+                    <svg class="lang-globe" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+                    <span class="lang-current" id="langCurrent">EN</span>
+                    <svg class="lang-chevron" width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 6l4 4 4-4"/></svg>
+                </button>
+                <div class="lang-dropdown" id="langDropdown">
+                    <button class="lang-opt active" data-lang="en" data-label="EN">
+                        <span class="lang-flag">🇬🇧</span>
+                        <span class="lang-name">English</span>
+                        <svg class="lang-check" width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 8l4 4 6-7"/></svg>
+                    </button>
+                    <button class="lang-opt" data-lang="hi" data-label="HI">
+                        <span class="lang-flag">🇮🇳</span>
+                        <span class="lang-name">हिन्दी</span>
+                        <svg class="lang-check" width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 8l4 4 6-7"/></svg>
+                    </button>
+                    <button class="lang-opt" data-lang="mr" data-label="MR">
+                        <span class="lang-flag">🇮🇳</span>
+                        <span class="lang-name">मराठी</span>
+                        <svg class="lang-check" width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 8l4 4 6-7"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Hidden Google Translate container – no visual element appears -->
+            <div id="google_translate_element" style="position: absolute; top: -9999px; left: -9999px; opacity: 0; pointer-events: none; width: 0; height: 0;"></div>
+            <button class="hamburger" id="hamburger">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </nav>
+    <section class="hero page-hero" id="hero"><canvas class="hero-canvas" id="heroCanvas"></canvas>
+        <div class="hero-noise"></div>
+        <div class="hero-content">
+            <div class="hero-badge slide-up" style="--i:0"><span class="badge-dot"></span> Machine Learning</div>
+            <h1 class="hero-title"><span class="tline slide-up" style="--i:1">ML <em>Insights</em></span></h1>
+            <p class="hero-sub slide-up" style="--i:2">What the models learned from the price history — how accurate they are, where they work well and where they struggle.</p>
+        </div>
+    </section>
+    <section class="insights" style="padding:80px 0">
+        <div class="container">
+            <div class="sec-tag reveal-fade">01 · Results</div>
+            <h2 class="sec-title reveal-up">How Good Are the <em>Forecasts?</em></h2>
+            <p class="sec-sub">Models forecast prices step by step into the future and are scored on real prices they never saw during training: a 30-day validation window (used to pick the best model) and a separate 60-day test window (used once, for the final check).
+                Error is MAPE — the average % difference from the real price; lower is better.</p>
+            <div class="eda-summary">
+                <div class="esum-item"><span class="esum-val">22.38%</span><span class="esum-lbl">Selected models · test error</span></div>
+                <div class="esum-div"></div>
+                <div class="esum-item"><span class="esum-val">26.97%</span><span class="esum-lbl">Simple baseline · test error</span></div>
+                <div class="esum-div"></div>
+                <div class="esum-item"><span class="esum-val">17 / 25</span><span class="esum-lbl">Series where ML beat the baseline</span></div>
+                <div class="esum-div"></div>
+                <div class="esum-item"><span class="esum-val">5.7% – 40.0%</span><span class="esum-lbl">Test error range across the 25 series (min – max)</span></div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:2rem;margin-top:2rem">
+                <div>
+                    <h3>Model comparison</h3>
+                    <div class="ds-table-box" style="overflow-x:auto">
+                        <table class="ds-table">
+                            <thead>
+                                <tr>
+                                    <th>Model</th>
+                                    <th>Validation error (MAPE %)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Per-Series LightGBM</td>
+                                    <td>20.53</td>
+                                </tr>
+                                <tr>
+                                    <td>Per-Series XGBoost</td>
+                                    <td>19.15</td>
+                                </tr>
+                                <tr>
+                                    <td>Seasonal-Naive (baseline)</td>
+                                    <td>34.42</td>
+                                </tr>
+                                <tr>
+                                    <td>Last-7-Day Median (baseline)</td>
+                                    <td>19.12</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Global Cross-Series LightGBM</strong></td>
+                                    <td><strong>17.81</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div>
+                    <h3>Accuracy by crop (test)</h3>
+                    <div class="ds-table-box" style="overflow-x:auto">
+                        <table class="ds-table">
+                            <thead>
+                                <tr>
+                                    <th>Crop</th>
+                                    <th>Avg. error</th>
+                                    <th>Baseline error</th>
+                                    <th>Beat baseline</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Potato</td>
+                                    <td>10.6%</td>
+                                    <td>8.9%</td>
+                                    <td>1 / 5</td>
+                                </tr>
+                                <tr>
+                                    <td>Onion</td>
+                                    <td>16.9%</td>
+                                    <td>20.4%</td>
+                                    <td>3 / 5</td>
+                                </tr>
+                                <tr>
+                                    <td>Spinach</td>
+                                    <td>22.3%</td>
+                                    <td>28.4%</td>
+                                    <td>5 / 5</td>
+                                </tr>
+                                <tr>
+                                    <td>Cabbage</td>
+                                    <td>30.3%</td>
+                                    <td>44.0%</td>
+                                    <td>5 / 5</td>
+                                </tr>
+                                <tr>
+                                    <td>Tomato</td>
+                                    <td>31.8%</td>
+                                    <td>33.1%</td>
+                                    <td>3 / 5</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="insights" style="padding:80px 0">
+        <div class="container">
+            <div class="sec-tag reveal-fade">02 · Figures</div>
+            <h2 class="sec-title reveal-up">Model <em>Comparison</em></h2>
+            <figure class="ph-fig"><img src="images/ml_mape_comparison.png" alt="Validation error across the 25 city–crop series and five approaches" loading="lazy" />
+                <figcaption>Validation error across the 25 city–crop series and five approaches</figcaption>
+            </figure>
+            <figure class="ph-fig"><img src="images/ml_mape_by_horizon.png" alt="Average forecast error by days ahead" loading="lazy" />
+                <figcaption>Average validation error by days ahead — accuracy drops the further out we predict</figcaption>
+            </figure>
+            <figure class="ph-fig"><img src="images/ml_actual_vs_predicted.png" alt="Actual vs predicted prices" loading="lazy" />
+                <figcaption>Actual vs predicted prices (LightGBM and XGBoost, all series pooled) — points close to the dashed line are accurate</figcaption>
+            </figure>
+        </div>
+    </section>
+    <section class="insights" style="padding:80px 0">
+        <div class="container">
+            <div class="sec-tag reveal-fade">03 · Insights</div>
+            <h2 class="sec-title reveal-up">What We <em>Learned</em></h2>
+            <div class="ins-grid">
+                <div class="ins-card">
+                    <div class="ins-bar" style="background:#2563EB"></div>
+                    <h3>Error range: 5.7% to 40.0%</h3>
+                    <p>On the test window, the lowest error is Kolhapur Onion (5.7%) and the highest is Nagpur Spinach (40.0%); the middle series sits near 22.6%. Accuracy varies a lot by series.</p>
+                </div>
+                <div class="ins-card">
+                    <div class="ins-bar" style="background:#10B981"></div>
+                    <h3>Best and worst crops</h3>
+                    <p>Potato is the most predictable (10.6% average test error); Tomato (31.8%) and Cabbage (30.3%) are the hardest.</p>
+                </div>
+                <div class="ins-card">
+                    <div class="ins-bar" style="background:#F59E0B"></div>
+                    <h3>Toughest series</h3>
+                    <p>Highest test error: Nagpur Spinach (40.0%), Nagpur Tomato (37.9%), Kolhapur Tomato (37.3%). Treat these forecasts as wide ranges. Nagpur is the hardest city on average (27.7%).</p>
+                </div>
+                <div class="ins-card">
+                    <div class="ins-bar" style="background:#EF4444"></div>
+                    <h3>A simple baseline is hard to beat for Potato</h3>
+                    <p>Potato prices move so steadily that the last-7-day median already scores 8.9%, so the models beat it in only 1 of 5 cities. The models gain most on Cabbage (30.3% vs 44.0%).</p>
+                </div>
+                <div class="ins-card">
+                    <div class="ins-bar" style="background:#8B5CF6"></div>
+                    <h3>Learning across series helps</h3>
+                    <p>The Global model, trained on all 25 series together, has the lowest validation error (17.81%) and was chosen for 13 series. It is the only model to beat the last-7-day median on average (19.12%).</p>
+                </div>
+                <div class="ins-card">
+                    <div class="ins-bar" style="background:#059669"></div>
+                    <h3>Error grows with days ahead</h3>
+                    <p>For the Global model, validation error rises from 11.1% on day 1 to 17.8% on day 30. That is why the Predict page shows a range, not a single number.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="insights" style="padding:80px 0">
+        <div class="container">
+            <div class="sec-tag reveal-fade">04 · Per-Series Accuracy</div>
+            <h2 class="sec-title reveal-up">Every City–Crop <em>Result</em></h2>
+            <p class="sec-sub">The best model was picked for each series on the 30-day validation window, then checked on the 60-day test window. Errors are MAPE %.</p>
+            <div class="ds-table-box" style="overflow-x:auto">
+                <table class="ds-table">
+                    <thead>
+                        <tr>
+                            <th>City</th>
+                            <th>Crop</th>
+                            <th>Selected model</th>
+                            <th>Validation error</th>
+                            <th>Test error</th>
+                            <th>Baseline (test)</th>
+                            <th>Beat baseline</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Kolhapur</td>
+                            <td>Cabbage</td>
+                            <td>Per-Series XGBoost</td>
+                            <td>23.77</td>
+                            <td>27.97</td>
+                            <td>30.67</td>
+                            <td>✅</td>
+                        </tr>
+                        <tr>
+                            <td>Kolhapur</td>
+                            <td>Onion</td>
+                            <td>Global Cross-Series LightGBM</td>
+                            <td>17.69</td>
+                            <td>5.70</td>
+                            <td>12.84</td>
+                            <td>✅</td>
+                        </tr>
+                        <tr>
+                            <td>Kolhapur</td>
+                            <td>Potato</td>
+                            <td>Per-Series XGBoost <em>(synthetic history)</em></td>
+                            <td>20.51</td>
+                            <td>8.88</td>
+                            <td>6.83</td>
+                            <td>—</td>
+                        </tr>
+                        <tr>
+                            <td>Kolhapur</td>
+                            <td>Spinach</td>
+                            <td>Per-Series XGBoost <em>(synthetic history)</em></td>
+                            <td>12.71</td>
+                            <td>20.54</td>
+                            <td>22.72</td>
+                            <td>✅</td>
+                        </tr>
+                        <tr>
+                            <td>Kolhapur</td>
+                            <td>Tomato</td>
+                            <td>Per-Series LightGBM</td>
+                            <td>12.25</td>
+                            <td>37.27</td>
+                            <td>34.13</td>
+                            <td>—</td>
+                        </tr>
+                        <tr>
+                            <td>Mumbai</td>
+                            <td>Cabbage</td>
+                            <td>Per-Series XGBoost</td>
+                            <td>18.36</td>
+                            <td>25.16</td>
+                            <td>46.46</td>
+                            <td>✅</td>
+                        </tr>
+                        <tr>
+                            <td>Mumbai</td>
+                            <td>Onion</td>
+                            <td>Per-Series LightGBM</td>
+                            <td>8.04</td>
+                            <td>17.48</td>
+                            <td>24.95</td>
+                            <td>✅</td>
+                        </tr>
+                        <tr>
+                            <td>Mumbai</td>
+                            <td>Potato</td>
+                            <td>Global Cross-Series LightGBM</td>
+                            <td>10.53</td>
+                            <td>8.50</td>
+                            <td>5.47</td>
+                            <td>—</td>
+                        </tr>
+                        <tr>
+                            <td>Mumbai</td>
+                            <td>Spinach</td>
+                            <td>Global Cross-Series LightGBM</td>
+                            <td>11.85</td>
+                            <td>27.96</td>
+                            <td>34.55</td>
+                            <td>✅</td>
+                        </tr>
+                        <tr>
+                            <td>Mumbai</td>
+                            <td>Tomato</td>
+                            <td>Global Cross-Series LightGBM</td>
+                            <td>18.35</td>
+                            <td>22.59</td>
+                            <td>29.79</td>
+                            <td>✅</td>
+                        </tr>
+                        <tr>
+                            <td>Nagpur</td>
+                            <td>Cabbage</td>
+                            <td>Global Cross-Series LightGBM</td>
+                            <td>19.82</td>
+                            <td>26.26</td>
+                            <td>38.41</td>
+                            <td>✅</td>
+                        </tr>
+                        <tr>
+                            <td>Nagpur</td>
+                            <td>Onion</td>
+                            <td>Per-Series XGBoost</td>
+                            <td>9.06</td>
+                            <td>20.63</td>
+                            <td>18.34</td>
+                            <td>—</td>
+                        </tr>
+                        <tr>
+                            <td>Nagpur</td>
+                            <td>Potato</td>
+                            <td>Global Cross-Series LightGBM</td>
+                            <td>20.05</td>
+                            <td>13.50</td>
+                            <td>11.46</td>
+                            <td>—</td>
+                        </tr>
+                        <tr>
+                            <td>Nagpur</td>
+                            <td>Spinach</td>
+                            <td>Per-Series XGBoost</td>
+                            <td>10.71</td>
+                            <td>40.01</td>
+                            <td>50.36</td>
+                            <td>✅</td>
+                        </tr>
+                        <tr>
+                            <td>Nagpur</td>
+                            <td>Tomato</td>
+                            <td>Per-Series LightGBM</td>
+                            <td>17.23</td>
+                            <td>37.91</td>
+                            <td>38.52</td>
+                            <td>✅</td>
+                        </tr>
+                        <tr>
+                            <td>Nashik</td>
+                            <td>Cabbage</td>
+                            <td>Global Cross-Series LightGBM</td>
+                            <td>37.54</td>
+                            <td>36.36</td>
+                            <td>58.40</td>
+                            <td>✅</td>
+                        </tr>
+                        <tr>
+                            <td>Nashik</td>
+                            <td>Onion</td>
+                            <td>Per-Series LightGBM</td>
+                            <td>10.88</td>
+                            <td>27.33</td>
+                            <td>22.79</td>
+                            <td>—</td>
+                        </tr>
+                        <tr>
+                            <td>Nashik</td>
+                            <td>Potato</td>
+                            <td>Global Cross-Series LightGBM</td>
+                            <td>6.69</td>
+                            <td>8.47</td>
+                            <td>13.23</td>
+                            <td>✅</td>
+                        </tr>
+                        <tr>
+                            <td>Nashik</td>
+                            <td>Spinach</td>
+                            <td>Global Cross-Series LightGBM</td>
+                            <td>16.54</td>
+                            <td>14.01</td>
+                            <td>24.74</td>
+                            <td>✅</td>
+                        </tr>
+                        <tr>
+                            <td>Nashik</td>
+                            <td>Tomato</td>
+                            <td>Global Cross-Series LightGBM</td>
+                            <td>39.63</td>
+                            <td>25.02</td>
+                            <td>27.35</td>
+                            <td>✅</td>
+                        </tr>
+                        <tr>
+                            <td>Ratnagiri</td>
+                            <td>Cabbage</td>
+                            <td>Global Cross-Series LightGBM <em>(synthetic history)</em></td>
+                            <td>13.46</td>
+                            <td>35.90</td>
+                            <td>46.13</td>
+                            <td>✅</td>
+                        </tr>
+                        <tr>
+                            <td>Ratnagiri</td>
+                            <td>Onion</td>
+                            <td>Global Cross-Series LightGBM <em>(synthetic history)</em></td>
+                            <td>10.72</td>
+                            <td>13.24</td>
+                            <td>23.19</td>
+                            <td>✅</td>
+                        </tr>
+                        <tr>
+                            <td>Ratnagiri</td>
+                            <td>Potato</td>
+                            <td>Global Cross-Series LightGBM <em>(synthetic history)</em></td>
+                            <td>17.18</td>
+                            <td>13.55</td>
+                            <td>7.58</td>
+                            <td>—</td>
+                        </tr>
+                        <tr>
+                            <td>Ratnagiri</td>
+                            <td>Spinach</td>
+                            <td>Per-Series XGBoost <em>(synthetic history)</em></td>
+                            <td>14.12</td>
+                            <td>8.93</td>
+                            <td>9.53</td>
+                            <td>✅</td>
+                        </tr>
+                        <tr>
+                            <td>Ratnagiri</td>
+                            <td>Tomato</td>
+                            <td>Per-Series XGBoost</td>
+                            <td>6.41</td>
+                            <td>36.34</td>
+                            <td>35.80</td>
+                            <td>—</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+    <section class="insights" style="padding:80px 0">
+        <div class="container">
+            <div class="sec-tag reveal-fade">05 · Caveats</div>
+            <h2 class="sec-title reveal-up">Limitations</h2>
+            <div class="ins-grid">
+                <div class="ins-card">
+                    <div class="ins-bar" style="background:#EF4444"></div>
+                    <h3>Accuracy is uneven</h3>
+                    <p>Errors range from 5.7% to 40.0% on the test window, and the selected model beat the baseline on 17 of 25 series, not all. The average hides this spread.</p>
+                </div>
+                <div class="ins-card">
+                    <div class="ins-bar" style="background:#F59E0B"></div>
+                    <h3>Price history only</h3>
+                    <p>Weather, rainfall, market arrivals, transport and policy are not included, so sudden shocks cannot be predicted.</p>
+                </div>
+                <div class="ins-card">
+                    <div class="ins-bar" style="background:#8B5CF6"></div>
+                    <h3>Some synthetic history</h3>
+                    <p>6 of 25 series (Ratnagiri ×4, Kolhapur Potato and Spinach) use synthetic history and are marked wherever shown.</p>
+                </div>
+                <div class="ins-card">
+                    <div class="ins-bar" style="background:#2563EB"></div>
+                    <h3>Future scope</h3>
+                    <p>Weather and arrivals data, real-time price feeds, more crops and regions, and deeper models.</p>
+                </div>
+            </div>
+            <div class="hero-actions" style="margin-top:2.5rem"><a href="predict.html" class="btn-primary"><span class="btn-bg"></span><span class="btn-text">Try the Prediction</span><span class="btn-icon">🔮</span></a></div>
+        </div>
+    </section>
+    <footer class="footer">
+        <div class="container footer-row">
+            <div class="footer-logo">🌾 PriceHarvest</div>
+            <nav class="footer-nav"><a href="index.html#about">About</a><a href="index.html#dataset">Dataset</a><a href="index.html#eda">EDA</a><a href="tableau.html">Tableau</a><a href="ml.html">ML Insights</a><a href="predict.html">Predict</a><a href="mandi.html">Live Mandi</a></nav>
+            <div class="footer-copy">Data · Agmarknet Portal, Gov. of India · Usha Mittal Institute of Technology, SNDT Women's University</div>
+        </div>
+    </footer>
+    <script>
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'en',
+                includedLanguages: 'en,hi,mr',
+                layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+                autoDisplay: false
+            }, 'google_translate_element');
+        }
+    </script>
+    <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>
